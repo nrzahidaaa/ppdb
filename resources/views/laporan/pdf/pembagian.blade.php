@@ -18,12 +18,14 @@
         .Cukup  { background: #dbeafe; color: #1e40af; }
         .footer { margin-top: 20px; font-size: 9px; color: #999; text-align: right; }
         .page-break { page-break-after: always; }
+        .filter-info { display: inline-block; background: #eef2f7; color: #33528A; border-radius: 4px; padding: 3px 10px; font-size: 10px; margin-top: 4px; }
     </style>
 </head>
 <body>
 <div class="header">
     <h1>LAPORAN PEMBAGIAN KELAS STRATIFIED</h1>
     <p>Tahun Ajaran 2025/2026 &nbsp;|&nbsp; Dicetak: {{ now()->format('d/m/Y H:i') }}</p>
+    <span class="filter-info">Kelas: {{ $filterLabel ?? 'Semua Kelas' }}</span>
 </div>
 
 @foreach($kelas as $k)

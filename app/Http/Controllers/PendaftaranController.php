@@ -41,18 +41,23 @@ class PendaftaranController extends Controller
             'no'       => 'nullable|string|max:20',
             'nomor_pendaftaran'       => 'nullable|string|max:20',
             'nama'          => 'required|string|max:100',
+            'nisn'          => 'nullable|string|max:20|unique:pendaftarans,nisn',
             'tempat_lahir'  => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
-            // 'jenis_kelamin' => 'required|in:L,P',
             'nama_orang_tua'=> 'nullable|string|max:100',
-            // 'nisn'          => 'nullable|string|max:20|unique:pendaftarans,nisn',
             'asal_sekolah'  => 'required|string|max:150',
             'alamat'        => 'nullable|string',
             'jalur'         => 'required|in:reguler,prestasi',
-            // 'pilihan_jurusan'=> 'nullable|in:MIPA,IPS,Bahasa',
-            // 'nilai_rata_rata'=> 'nullable|numeric',
-            // 'no_telp'       => 'nullable|string|max:20',
+            'no_telp'       => 'nullable|string|max:20',
             'status'        => 'nullable|in:pending,verifikasi,lulus,ditolak',
+
+                'berkas_lengkap'    => false,
+
+            'nisn_file'         => $berkas['nisn_file'] ?? null,
+            'kartu_keluarga'    => $berkas['kartu_keluarga'] ?? null,
+            'akta_kelahiran'    => $berkas['akta_kelahiran'] ?? null,
+            'foto'              => $berkas['foto'] ?? null,
+            'ijazah'            => $berkas['ijazah'] ?? null,
         ]);
 
         
@@ -90,14 +95,20 @@ class PendaftaranController extends Controller
         'tanggal_lahir' => 'nullable|date',
         'jenis_kelamin' => 'required|in:L,P',
         'nama_orang_tua'=> 'nullable|string|max:100',
-        // 'nisn'          => 'nullable|string|max:20|unique:pendaftarans,nisn',
+        'nisn'          => 'nullable|string|max:20|unique:pendaftarans,nisn',
         'asal_sekolah'  => 'required|string|max:150',
         'alamat'        => 'nullable|string',
         'jalur'         => 'required|in:reguler,prestasi',
-        // 'pilihan_jurusan'=> 'nullable|in:MIPA,IPS,Bahasa',
-        // 'nilai_rata_rata'=> 'nullable|numeric',
-        // 'no_telp'       => 'nullable|string|max:20',
+        'no_telp'       => 'nullable|string|max:20',
         'status'        => 'nullable|in:pending,verifikasi,lulus,ditolak',
+
+            'berkas_lengkap'    => false,
+
+        'nisn_file'         => $berkas['nisn_file'] ?? null,
+        'kartu_keluarga'    => $berkas['kartu_keluarga'] ?? null,
+        'akta_kelahiran'    => $berkas['akta_kelahiran'] ?? null,
+        'foto'              => $berkas['foto'] ?? null,
+        'ijazah'            => $berkas['ijazah'] ?? null,
     ]);
 
     $pendaftaran->update($validated);
@@ -133,34 +144,65 @@ public function formPublik()
 
 public function storePublik(Request $request)
 {
-    $validated = $request->validate([
+    $request->validate([
         'nama'            => 'required|string|max:100',
         'nisn'            => 'required|string|unique:pendaftarans,nisn',
         'tempat_lahir'    => 'required|string',
         'tanggal_lahir'   => 'required|date',
         'jenis_kelamin'   => 'required|in:L,P',
         'asal_sekolah'    => 'required|string|max:100',
-        'pilihan_jurusan' => 'required|in:MIPA,IPS,Bahasa',
-        'nilai_rata_rata' => 'required|numeric|min:0|max:100',
+        'jalur'           => 'required|in:reguler,prestasi',
         'nama_orang_tua'  => 'required|string|max:100',
         'no_telp'         => 'required|string|max:20',
         'alamat'          => 'required|string',
+        'nisn_file'       => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        'kartu_keluarga'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        'akta_kelahiran'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        'foto'            => 'required|file|mimes:jpg,jpeg,png|max:2048',
+        'ijazah'          => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
     ]);
 
-    $tahun = now()->format('Y');
+    $tahun  = now()->format('Y');
     $urutan = Pendaftaran::whereYear('created_at', $tahun)->count() + 1;
-    $nomor = 'PPDB-' . $tahun . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
-    
-    $validated['status'] = 'pending';
-    $validated['berkas_lengkap'] = false;
+    $nomor  = 'PPDB-' . $tahun . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
 
-    Pendaftaran::create($validated);
+    $berkas = [];
+    foreach (['nisn_file', 'kartu_keluarga', 'akta_kelahiran', 'foto', 'ijazah'] as $field) {
+        if ($request->hasFile($field)) {
+            $berkas[$field] = $request->file($field)->store('berkas-pendaftaran', 'public');
+        }
+    }
+
+    Pendaftaran::create([
+        'nomor_pendaftaran' => $nomor,
+        'nama'              => $request->nama,
+        'nisn'              => $request->nisn,
+        'tempat_lahir'      => $request->tempat_lahir,
+        'tanggal_lahir'     => $request->tanggal_lahir,
+        'jenis_kelamin'     => $request->jenis_kelamin,
+        'asal_sekolah'      => $request->asal_sekolah,
+        'nama_orang_tua'    => $request->nama_orang_tua,
+        'jalur'             => $request->jalur,
+        'no_telp'           => $request->no_telp,
+        'alamat'            => $request->alamat,
+        'status'            => 'pending',
+        'berkas_lengkap'    =>
+            !empty($berkas['nisn_file']) &&
+            !empty($berkas['kartu_keluarga']) &&
+            !empty($berkas['akta_kelahiran']) &&
+            !empty($berkas['foto']) &&
+            !empty($berkas['ijazah']),
+        'nisn_file'         => $berkas['nisn_file'] ?? null,
+        'kartu_keluarga'    => $berkas['kartu_keluarga'] ?? null,
+        'akta_kelahiran'    => $berkas['akta_kelahiran'] ?? null,
+        'foto'              => $berkas['foto'] ?? null,
+        'ijazah'            => $berkas['ijazah'] ?? null,
+    ]);
 
     return redirect()->route('pendaftaran.sukses')
-                    ->with('nomor', $validated['nomor_pendaftaran'])
-                    ->with('nama', $validated['nama']);
+        ->with('nisn', $request->nisn)
+        ->with('nama', $request->nama);
 }
-
 public function pengumuman()
 {
     return view('pendaftaran.pengumuman');
@@ -169,19 +211,51 @@ public function pengumuman()
 public function cekPengumuman(Request $request)
 {
     $request->validate([
-        'nomor_pendaftaran' => 'required|string',
+        'nisn' => 'required'
     ]);
 
-    $data = Pendaftaran::where('nomor_pendaftaran', $request->nomor_pendaftaran)->first();
+    $data = Pendaftaran::with(['kelas', 'nilaiTes'])->where('nisn', $request->nisn)->first();
+
+    if (!$data) {
+        return back()->with('error', 'NISN tidak ditemukan')->withInput();
+    }
+
+    if ($data->nilaiTes && $data->nilaiTes->status_hasil) {
+        $data->status = $data->nilaiTes->status_hasil;
+    }
 
     return view('pendaftaran.pengumuman', compact('data'));
 }
+
 public function updateStatus(Request $request, $id)
 {
     $pendaftaran = Pendaftaran::findOrFail($id);
     $pendaftaran->update(['status' => $request->status]);
 
     return redirect()->back()->with('success', 'Status berhasil diperbarui!');
+}
+
+public function revisi(Request $request, $id)
+{
+    $pendaftaran = Pendaftaran::findOrFail($id);  
+
+    $files = ['ijazah', 'kartu_keluarga', 'akta_kelahiran', 'foto'];
+    foreach ($files as $file) {
+        if ($request->hasFile($file)) {
+            $path = $request->file($file)->store('berkas', 'public');
+            $pendaftaran->$file = $path;
+        }
+    }
+
+    $pendaftaran->status = 'verifikasi'; // balik ke verifikasi setelah revisi
+    $pendaftaran->save();
+
+    return redirect()->route('pengumuman')->with('success', 'Berkas revisi berhasil dikirim. Silakan tunggu verifikasi panitia.');
+}
+public function berkas($id)
+{
+    $pendaftaran = Pendaftaran::findOrFail($id);
+    return view('pendaftaran.berkas', compact('pendaftaran'));
 }
 }
 

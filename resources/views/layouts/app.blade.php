@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -50,6 +50,11 @@
             <span>👨‍🎓</span> Data Siswa
         </a>
 
+        <a href="{{ route('kelas.index') }}"
+           class="nav-item {{ request()->routeIs('kelas.*') ? 'active' : '' }}">
+            <span>🏫</span> Data Kelas
+        </a>
+
         <div class="nav-label">Proses Seleksi</div>
 
         <a href="{{ route('klasifikasi.index') }}"
@@ -57,9 +62,10 @@
             <span>🤖</span> Proses Klasifikasi
         </a>
 
-        <a href="{{ route('klasifikasi.pembagian') }}" class="nav-item">
-    <span>🏫</span> Pembagian Kelas
-</a>
+        <a href="{{ route('klasifikasi.pembagian') }}"
+           class="nav-item {{ request()->is('klasifikasi/pembagian') ? 'active' : '' }}">
+            <span>📋</span> Pembagian Kelas
+        </a>
 
         <div class="nav-label">Output</div>
 
@@ -68,15 +74,10 @@
             <span>📊</span> Laporan
         </a>
 
-        <!-- <a href="{{ route('settings.index') }}"
-           class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-            <span>⚙️</span> Pengaturan
-        </a> -->
-
         <a href="{{ route('nilai-tes.index') }}"
-   class="nav-item {{ request()->routeIs('nilai-tes.*') ? 'active' : '' }}">
-    <span>📊</span> Nilai Tes
-</a>
+           class="nav-item {{ request()->routeIs('nilai-tes.*') ? 'active' : '' }}">
+            <span>📝</span> Nilai Tes
+        </a>
     </nav>
 
     <div class="sidebar-bottom">

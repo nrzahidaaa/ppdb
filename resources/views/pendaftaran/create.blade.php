@@ -32,11 +32,11 @@
                         <input type="text" name="nama" class="form-control" placeholder="Nama lengkap siswa" value="{{ old('nama') }}" required>
                         @error('nama')<div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>@enderror
                     </div>
-                    <!-- <div class="form-group">
+                    <div class="form-group">
                         <label class="form-label">NISN <span style="color:red;">*</span></label>
                         <input type="text" name="nisn" class="form-control" placeholder="10 digit NISN" value="{{ old('nisn') }}" required>
                         @error('nisn')<div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>@enderror
-                    </div> -->
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Tempat Lahir <span style="color:red;">*</span></label>
                         <input type="text" name="tempat_lahir" class="form-control" placeholder="Kota tempat lahir" value="{{ old('tempat_lahir') }}" required>
@@ -111,6 +111,78 @@
                     </div> -->
                 </div>
             </div>
+
+            
+                {{-- ======================== SECTION 3: Upload Berkas ======================== --}}
+                <div style="font-size:11px;font-weight:700;color:#33528A;text-transform:uppercase;letter-spacing:1px;margin:20px 0 12px;padding-bottom:6px;border-bottom:2px solid #C4E81D;">
+                    📁 Upload Berkas
+                </div>
+
+                <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#0369a1;">
+                    ℹ️ Upload berkas dalam format <strong>JPG, PNG, atau PDF</strong>. Ukuran maksimal masing-masing file <strong>2MB</strong>.
+                </div>
+
+                                {{-- NISN --}}
+                    <div class="form-group">
+                        <label class="form-label">NISN <span style="color:#e05454">*</span></label>
+                        <input type="text" name="nisn" value="{{ old('nisn') }}" class="form-control"
+                            placeholder="10 digit nomor NISN"
+                            maxlength="10"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                        <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
+                            NISN terdiri dari 10 digit angka. Bisa dicek di
+                            <a href="https://nisn.data.kemdikbud.go.id" target="_blank" style="color:#33528A;">nisn.data.kemdikbud.go.id</a>
+                        </div>
+                        @error('nisn')
+                            <div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    {{-- Kartu Keluarga --}}
+                    <div class="form-group" style="background:#f8f9fc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                        <label class="form-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                            <span style="font-size:18px;">👨‍👩‍👧</span>
+                            <span>Kartu Keluarga (KK) <span style="color:#e05454">*</span></span>
+                        </label>
+                        <input type="file" name="kartu_keluarga" class="form-control" accept=".jpg,.jpeg,.png,.pdf"
+                               onchange="previewFile(this, 'prev-kk')">
+                        <div id="prev-kk" style="display:none;margin-top:8px;"></div>
+                        @error('kartu_keluarga')
+                            <div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>
+                        @enderror
+                        <div style="font-size:10px;color:#9ca3af;margin-top:6px;">Format: JPG/PNG/PDF, maks 2MB</div>
+                    </div>
+
+                    {{-- Akta Kelahiran --}}
+                    <div class="form-group" style="background:#f8f9fc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                        <label class="form-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                            <span style="font-size:18px;">📜</span>
+                            <span>Akta Kelahiran <span style="color:#e05454">*</span></span>
+                        </label>
+                        <input type="file" name="akta_kelahiran" class="form-control" accept=".jpg,.jpeg,.png,.pdf"
+                               onchange="previewFile(this, 'prev-akta')">
+                        <div id="prev-akta" style="display:none;margin-top:8px;"></div>
+                        @error('akta_kelahiran')
+                            <div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>
+                        @enderror
+                        <div style="font-size:10px;color:#9ca3af;margin-top:6px;">Format: JPG/PNG/PDF, maks 2MB</div>
+                    </div>
+
+                    {{-- Foto Diri --}}
+                    <div class="form-group" style="background:#f8f9fc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                        <label class="form-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                            <span style="font-size:18px;">📸</span>
+                            <span>Foto Diri 3×4 <span style="color:#e05454">*</span></span>
+                        </label>
+                        <input type="file" name="foto" class="form-control" accept=".jpg,.jpeg,.png"
+                               onchange="previewFile(this, 'prev-foto')">
+                        <div id="prev-foto" style="display:none;margin-top:8px;"></div>
+                        @error('foto')
+                            <div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>
+                        @enderror
+                        <div style="font-size:10px;color:#9ca3af;margin-top:6px;">Format: JPG/PNG, background merah, maks 2MB</div>
+                    </div>
+
+                </div>
 
             {{-- Tombol --}}
             <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border);">

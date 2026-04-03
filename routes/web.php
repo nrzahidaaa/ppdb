@@ -11,6 +11,7 @@ use App\Http\Controllers\KelasController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NilaiTesController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\PengumumanController;
 
 // ===== PUBLIC ROUTES =====
 Route::get('/', [BerandaController::class, 'index'])->name('beranda');
@@ -18,7 +19,7 @@ Route::get('/daftar', [PendaftaranController::class, 'formPublik'])->name('penda
 Route::post('/daftar', [PendaftaranController::class, 'storePublik'])->name('pendaftaran.storePublik');
 
 Route::get('/pengumuman', [PendaftaranController::class, 'pengumuman'])->name('pengumuman');
-Route::post('/pengumuman', [PendaftaranController::class, 'cekPengumuman'])->name('pengumuman.cek');
+Route::post('/pengumuman/cek', [PendaftaranController::class, 'cekPengumuman'])->name('pengumuman.cek');
 
 Route::get('/daftar/sukses', function() {
     return view('pendaftaran.sukses');
@@ -37,6 +38,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('pendaftaran', PendaftaranController::class);
     Route::post('/pendaftaran/import', [PendaftaranController::class, 'importExcel'])->name('pendaftaran.import');
     Route::patch('/pendaftaran/{id}/status', [PendaftaranController::class, 'updateStatus'])->name('pendaftaran.updateStatus');
+    Route::put('/pendaftaran/{id}/revisi', [PendaftaranController::class, 'revisi'])->name('pendaftaran.revisi');
+    Route::get('/pendaftaran/{id}/berkas', [PendaftaranController::class, 'berkas'])->name('pendaftaran.berkas');
+    
 
     // Data Master
     Route::resource('master', MasterController::class);
@@ -46,6 +50,7 @@ Route::put('/master/user/{id}', [MasterController::class, 'updateUser'])->name('
 Route::delete('/master/user/{id}', [MasterController::class, 'destroyUser'])->name('master.user.destroy');
 
 // Master Kelas
+Route::get('/kelas', [MasterController::class, 'indexKelas'])->name('kelas.index');
 Route::post('/master/kelas', [MasterController::class, 'storeKelas'])->name('master.kelas.store');
 Route::put('/master/kelas/{id}', [MasterController::class, 'updateKelas'])->name('master.kelas.update');
 Route::delete('/master/kelas/{id}', [MasterController::class, 'destroyKelas'])->name('master.kelas.destroy');
@@ -57,8 +62,6 @@ Route::delete('/master/kelas/{id}', [MasterController::class, 'destroyKelas'])->
 Route::get('/klasifikasi', [KlasifikasiController::class, 'index'])->name('klasifikasi.index');
 Route::post('/klasifikasi/proses', [KlasifikasiController::class, 'proses'])->name('klasifikasi.proses');
 
-    // Pembagian Kelas
-    Route::resource('kelas', KelasController::class);
     // Route::post('/kelas/{kelas}/assign-siswa', [KelasController::class, 'assignSiswa'])->name('kelas.assign-siswa');
     Route::get('/klasifikasi/pembagian', [KlasifikasiController::class, 'pembagianKelas'])->name('klasifikasi.pembagian');
 Route::post('/klasifikasi/pembagian', [KlasifikasiController::class, 'prosesKelas'])->name('klasifikasi.prosesKelas');
@@ -83,6 +86,8 @@ Route::get('/laporan/excel/nilai', [LaporanController::class, 'excelNilai'])->na
     Route::put('/settings',   [SettingsController::class, 'update'])->name('settings.update');
 
     Route::get('/nilai-tes', [NilaiTesController::class, 'index'])->name('nilai-tes.index');
+    Route::post('/nilai-tes', [NilaiTesController::class, 'store'])->name('nilai-tes.store');
 Route::post('/nilai-tes/import', [NilaiTesController::class, 'importExcel'])->name('nilai-tes.import');
 Route::delete('/nilai-tes/{id}', [NilaiTesController::class, 'destroy'])->name('nilai-tes.destroy');
+
 });

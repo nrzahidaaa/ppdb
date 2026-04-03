@@ -52,6 +52,11 @@ class MasterController extends Controller
         return redirect()->route('master.index')->with('success', 'User berhasil dihapus!');
     }
 
+    public function indexKelas()
+    {
+        $kelas = Kelas::withCount('siswa')->latest()->get();
+        return view('kelas.index', compact('kelas'));
+    }
     public function storeKelas(Request $request)
     {
         $request->validate([

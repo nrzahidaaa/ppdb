@@ -8,27 +8,30 @@ class Pendaftaran extends Model
 {
     protected $table = 'pendaftarans';
 
-    protected $fillable = [
-        'nomor_pendaftaran',
-        'nama',
-        // 'nisn',
-        'tempat_lahir',
-        'tanggal_lahir',
-        // 'jenis_kelamin',
-        'asal_sekolah',
-        // 'pilihan_jurusan',
-        'jalur',
-        // 'nilai_rata_rata',
-        'nama_orang_tua',
-        // 'no_telp',
-        'alamat',
-        'status',
-        // 'predikat',
-        // 'id_kelas',
-        // 'berkas_lengkap',
-        // 'catatan',
-        'kelas_id',
-    ];
+
+protected $fillable = [
+    'nomor_pendaftaran',
+    'nama',
+    'nisn',
+    'tempat_lahir',
+    'tanggal_lahir',
+    'jenis_kelamin',
+    'asal_sekolah',
+    'jalur',
+    'nama_orang_tua',
+    'no_telp',
+    'alamat',
+    'status',
+    'berkas_lengkap',
+    'nisn_file',
+    'kartu_keluarga',
+    'akta_kelahiran',
+    'foto',
+    'ijazah',
+    'catatan_revisi',
+    'predikat',
+    'total_nilai',
+];
 
     protected $casts = [
         'tanggal_lahir'  => 'date',

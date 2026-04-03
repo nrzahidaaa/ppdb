@@ -36,34 +36,12 @@
             margin-top: 24px;
         }
 
-        .status-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
-        }
-
-        .status-lulus {
-            background: linear-gradient(135deg, var(--success), #6da024);
-            color: white;
-            border-radius: 20px;
-        }
-
-        .status-ditolak {
-            background: linear-gradient(135deg, #e05454, #c43d3d);
-            color: white;
-            border-radius: 20px;
-        }
-
-        .status-pending {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border-radius: 20px;
-        }
-
-        .status-verifikasi {
-            background: linear-gradient(135deg, var(--secondary), #1a8a82);
-            color: white;
-            border-radius: 20px;
-        }
+        .status-icon { font-size: 56px; margin-bottom: 16px; }
+        .status-lulus { background: linear-gradient(135deg, var(--success), #6da024); color: white; border-radius: 20px; }
+        .status-ditolak { background: linear-gradient(135deg, #e05454, #c43d3d); color: white; border-radius: 20px; }
+        .status-pending { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 20px; }
+        .status-verifikasi { background: linear-gradient(135deg, var(--secondary), #1a8a82); color: white; border-radius: 20px; }
+        .status-revisi { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border-radius: 20px; }
 
         .info-row {
             display: flex;
@@ -73,10 +51,46 @@
             border-bottom: 1px solid var(--border);
             font-size: 13px;
         }
-
         .info-row:last-child { border-bottom: none; }
         .info-label { color: var(--text-light); }
         .info-value { font-weight: 600; }
+
+        .revisi-form {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-top: 20px;
+            box-shadow: var(--shadow);
+            border: 2px solid #f59e0b;
+        }
+        .revisi-form .revisi-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #d97706;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-upload-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .file-upload-item label {
+            font-size: 12px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .file-upload-item .file-note {
+            font-size: 11px;
+            color: #d97706;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -99,25 +113,31 @@
     <div style="text-align:center;margin-bottom:32px;">
         <div style="font-size:40px;margin-bottom:12px;">📢</div>
         <h1 style="font-size:22px;font-weight:800;color:var(--primary);margin-bottom:8px;">Cek Status Pengumuman</h1>
-        <p style="color:var(--text-light);font-size:13px;">Masukkan nomor pendaftaran untuk mengecek status seleksi Anda</p>
-    </div>
+        <p style="color:var(--text-light);font-size:13px;">Masukkan NISN untuk mengecek status seleksi Anda</p>
+
+    {{-- Flash Messages --}}
+    @if(session('success'))
+    <div class="alert alert-success" style="margin-bottom:16px;">✅ {{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+    <div class="alert alert-danger" style="margin-bottom:16px;">❌ {{ session('error') }}</div>
+    @endif
 
     {{-- Form Cek --}}
     <div style="background:white;border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-bottom:24px;">
         <form method="POST" action="{{ route('pengumuman.cek') }}">
             @csrf
             <div class="form-group">
-                <label class="form-label">Nomor Pendaftaran</label>
+                <label class="form-label">NISN</label>
                 <input
                     type="text"
-                    name="nomor_pendaftaran"
+                    name="nisn"
                     class="form-control"
-                    placeholder="contoh: PPDB-2025-0001"
-                    value="{{ old('nomor_pendaftaran', request('nomor_pendaftaran')) }}"
+                    placeholder="Masukkan NISN"
+                    value="{{ old('nisn', request('nisn')) }}"
                     required
-                    style="text-transform:uppercase;"
                 >
-                @error('nomor_pendaftaran')
+                @error('nisn')
                     <div style="color:#e05454;font-size:11px;margin-top:4px;">{{ $message }}</div>
                 @enderror
             </div>
@@ -130,8 +150,9 @@
     {{-- Hasil --}}
     @isset($data)
         @if($data)
-            {{-- Data ditemukan --}}
-            <div class="result-card {{ 'status-' . $data->status }}">
+
+            {{-- Card Status --}}
+            <div class="result-card status-{{ $data->status }}">
 
                 @if($data->status === 'lulus')
                     <div class="status-icon">🎉</div>
@@ -145,6 +166,10 @@
                     <div class="status-icon">🔍</div>
                     <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;">Sedang Diverifikasi</h2>
                     <p style="opacity:0.9;font-size:13px;margin-bottom:24px;">Berkas Anda sedang dalam proses verifikasi oleh panitia. Harap menunggu.</p>
+                @elseif($data->status === 'revisi')
+                    <div class="status-icon">✏️</div>
+                    <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;">Berkas Perlu Direvisi</h2>
+                    <p style="opacity:0.9;font-size:13px;margin-bottom:24px;">Ada berkas yang perlu diperbaiki. Silakan upload ulang berkas yang diminta di bawah ini.</p>
                 @else
                     <div class="status-icon">⏳</div>
                     <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;">Menunggu Proses</h2>
@@ -165,10 +190,7 @@
                         <span class="info-label" style="color:rgba(255,255,255,0.8);">Asal Sekolah</span>
                         <span class="info-value">{{ $data->asal_sekolah }}</span>
                     </div>
-                    <div class="info-row" style="border-color:rgba(255,255,255,0.2);">
-                        <span class="info-label" style="color:rgba(255,255,255,0.8);">Pilihan Jurusan</span>
-                        <span class="info-value">{{ $data->pilihan_jurusan }}</span>
-                    </div>
+                
                     @if($data->status === 'lulus' && $data->kelas)
                     <div class="info-row" style="border-color:rgba(255,255,255,0.2);">
                         <span class="info-label" style="color:rgba(255,255,255,0.8);">Kelas</span>
@@ -177,15 +199,25 @@
                     @endif
                     <div class="info-row" style="border-bottom:none;">
                         <span class="info-label" style="color:rgba(255,255,255,0.8);">Status</span>
-                        <span class="info-value" style="text-transform:capitalize;">
-                            @if($data->status === 'lulus')     ✅ Lulus
+                        <span class="info-value">
+                            @if($data->status === 'lulus')       ✅ Lulus
                             @elseif($data->status === 'ditolak') ❌ Tidak Lulus
                             @elseif($data->status === 'verifikasi') 🔵 Verifikasi
-                            @else ⏳ Pending
+                            @elseif($data->status === 'revisi')  ✏️ Perlu Revisi
+                            @else                                ⏳ Pending
                             @endif
                         </span>
                     </div>
                 </div>
+
+                @if($data->status === 'lulus' && $data->predikat)
+                <div style="margin-top:16px;background:rgba(255,255,255,0.15);border-radius:10px;padding:14px;text-align:left;">
+                    <div style="font-size:12px;opacity:0.9;">Predikat Hasil Seleksi</div>
+                    <div style="font-size:18px;font-weight:800;">
+                        {{ $data->predikat }}
+                    </div>
+                </div>
+                @endif
 
                 @if($data->status === 'lulus')
                 <div style="margin-top:20px;background:rgba(255,255,255,0.15);border-radius:10px;padding:14px;font-size:12px;text-align:left;">
@@ -195,23 +227,92 @@
 
             </div>
 
+            {{-- ===== FORM REVISI BERKAS (hanya muncul jika status revisi) ===== --}}
+            @if($data->status === 'revisi')
+            <div class="revisi-form">
+                <div class="revisi-title">✏️ Upload Ulang Berkas yang Perlu Direvisi</div>
+
+                {{-- Catatan dari admin --}}
+                @if($data->catatan_revisi)
+                <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;color:#92400e;">
+                    <strong>📋 Catatan dari Panitia:</strong><br>
+                    {{ $data->catatan_revisi }}
+                </div>
+                @endif
+
+                <form method="POST" action="{{ route('pendaftaran.revisi', $data->id) }}" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="file-upload-item">
+                        <label>📄 Ijazah / SKL</label>
+                        <input type="file" name="ijazah" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        @if($data->ijazah)
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">
+                            File sebelumnya: <a href="{{ asset('storage/'.$data->ijazah) }}" target="_blank" style="color:var(--primary);">Lihat file lama</a>
+                        </div>
+                        @endif
+                        <div class="file-note">⚠️ Kosongkan jika tidak perlu diganti</div>
+                    </div>
+
+                    <div class="file-upload-item">
+                        <label>📋 Kartu Keluarga (KK)</label>
+                        <input type="file" name="kartu_keluarga" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        @if($data->kartu_keluarga)
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">
+                            File sebelumnya: <a href="{{ asset('storage/'.$data->kartu_keluarga) }}" target="_blank" style="color:var(--primary);">Lihat file lama</a>
+                        </div>
+                        @endif
+                        <div class="file-note">⚠️ Kosongkan jika tidak perlu diganti</div>
+                    </div>
+
+                    <div class="file-upload-item">
+                        <label>🎂 Akta Kelahiran</label>
+                        <input type="file" name="akta_kelahiran" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        @if($data->akta_kelahiran)
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">
+                            File sebelumnya: <a href="{{ asset('storage/'.$data->akta_kelahiran) }}" target="_blank" style="color:var(--primary);">Lihat file lama</a>
+                        </div>
+                        @endif
+                        <div class="file-note">⚠️ Kosongkan jika tidak perlu diganti</div>
+                    </div>
+
+                    <div class="file-upload-item">
+                        <label>📸 Foto 3×4</label>
+                        <input type="file" name="foto" class="form-control" accept=".jpg,.jpeg,.png">
+                        @if($data->foto)
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">
+                            File sebelumnya: <a href="{{ asset('storage/'.$data->foto) }}" target="_blank" style="color:var(--primary);">Lihat file lama</a>
+                        </div>
+                        @endif
+                        <div class="file-note">⚠️ Kosongkan jika tidak perlu diganti</div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);">
+                            📤 Kirim Revisi Berkas
+                        </button>
+                    </div>
+                </form>
+            </div>
+            @endif
+
         @else
             {{-- Data tidak ditemukan --}}
             <div style="background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:var(--shadow-md);">
                 <div style="font-size:48px;margin-bottom:16px;">🔎</div>
                 <h2 style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">Data Tidak Ditemukan</h2>
                 <p style="color:var(--text-light);font-size:13px;margin-bottom:20px;">
-                    Nomor pendaftaran <strong>{{ request('nomor_pendaftaran') }}</strong> tidak ditemukan dalam sistem.
-                    Pastikan nomor yang Anda masukkan sudah benar.
+                    NISN <strong>{{ request('nisn') }}</strong> tidak ditemukan dalam sistem.
+                    Pastikan NISN yang Anda masukkan sudah benar.
                 </p>
                 <div class="alert alert-warning" style="text-align:left;">
-                    💡 Nomor pendaftaran diberikan saat Anda berhasil mendaftar, contoh: <strong>PPDB-2025-0001</strong>
-                </div>
+                    Nomor pendaftaran diberikan saat Anda berhasil mendaftar, contoh: <strong>PPDB-2025-0001</strong>                </div>
             </div>
         @endif
     @endisset
 
-    {{-- Info --}}
+    {{-- Info Keterangan Status --}}
     @if(!isset($data))
     <div style="background:white;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px;">ℹ️ Keterangan Status</div>
@@ -223,6 +324,10 @@
             <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
                 <span class="badge badge-secondary" style="min-width:80px;justify-content:center;">🔵 Verifikasi</span>
                 <span style="color:var(--text-light);">Berkas sedang diverifikasi oleh panitia</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+                <span class="badge" style="min-width:80px;justify-content:center;background:#fef3c7;color:#d97706;">✏️ Revisi</span>
+                <span style="color:var(--text-light);">Ada berkas yang perlu diperbaiki dan diupload ulang</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
                 <span class="badge badge-success" style="min-width:80px;justify-content:center;">✅ Lulus</span>

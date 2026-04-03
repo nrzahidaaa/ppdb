@@ -46,22 +46,65 @@ class LaporanController extends Controller
         return $pdf->download('laporan-klasifikasi.pdf');
     }
 
-    public function pdfPembagian()
+    public function pdfPembagian(Request $request)
     {
-        $kelas = Kelas::with(['siswa' => function ($q) {
+        // Ambil filter kelas dari request, misal ?kelas[]=7A&kelas[]=7B
+        $filterKelas = $request->input('kelas', []);
+
+        $query = Kelas::with(['siswa' => function ($q) {
             $q->where('status', 'lulus');
-        }])->get();
-        $pdf = Pdf::loadView('laporan.pdf.pembagian', compact('kelas'))
+        }]);
+
+        // Jika ada filter kelas tertentu, batasi hanya kelas itu
+        if (!empty($filterKelas)) {
+            $query->whereIn('nama_kelas', $filterKelas);
+        }
+
+        $kelas       = $query->get();
+        $filterLabel = !empty($filterKelas) ? implode(', ', $filterKelas) : 'Semua Kelas';
+
+        $pdf = Pdf::loadView('laporan.pdf.pembagian', compact('kelas', 'filterLabel'))
                   ->setPaper('a4', 'portrait');
-        return $pdf->download('laporan-pembagian-kelas.pdf');
+
+        $filename = !empty($filterKelas)
+            ? 'laporan-pembagian-kelas-' . implode('-', $filterKelas) . '.pdf'
+            : 'laporan-pembagian-kelas.pdf';
+
+        return $pdf->download($filename);
     }
 
-    public function pdfNilai()
+    public function pdfNilai(Request $request)
     {
-        $data = NilaiTes::with('siswa')->latest()->get();
-        $pdf  = Pdf::loadView('laporan.pdf.nilai', compact('data'))
-                   ->setPaper('a4', 'landscape');
-        return $pdf->download('laporan-nilai-tes.pdf');
+        // Ambil filter kelas dari request, misal ?kelas[]=7A&kelas[]=7B
+        $filterKelas = $request->input('kelas', []);
+
+        $query = NilaiTes::with(['siswa' => function ($q) {
+            // Jika ada filter, join ke kelas
+            if (!empty($GLOBALS['filterKelas'] ?? [])) {
+                $q->whereHas('kelas', function ($kq) {
+                    $kq->whereIn('nama_kelas', $GLOBALS['filterKelas']);
+                });
+            }
+        }, 'siswa.kelas']);
+
+        // Filter berdasarkan kelas siswa
+        if (!empty($filterKelas)) {
+            $query->whereHas('siswa.kelas', function ($q) use ($filterKelas) {
+                $q->whereIn('nama_kelas', $filterKelas);
+            });
+        }
+
+        $data        = $query->latest()->get();
+        $filterLabel = !empty($filterKelas) ? implode(', ', $filterKelas) : 'Semua Kelas';
+
+        $pdf = Pdf::loadView('laporan.pdf.nilai', compact('data', 'filterLabel'))
+                  ->setPaper('a4', 'landscape');
+
+        $filename = !empty($filterKelas)
+            ? 'laporan-nilai-tes-' . implode('-', $filterKelas) . '.pdf'
+            : 'laporan-nilai-tes.pdf';
+
+        return $pdf->download($filename);
     }
 
     // ===== EXCEL =====
@@ -127,14 +170,26 @@ class LaporanController extends Controller
         return $this->downloadExcel($spreadsheet, 'laporan-klasifikasi.xlsx');
     }
 
-    public function excelPembagian()
+    public function excelPembagian(Request $request)
     {
-        $data        = Pendaftaran::where('status', 'lulus')
-                            ->whereNotNull('id_kelas')
-                            ->with('kelas')->latest()->get();
+        $filterKelas = $request->input('kelas', []);
+
+        $query = Pendaftaran::where('status', 'lulus')
+                    ->whereNotNull('id_kelas')
+                    ->with('kelas');
+
+        if (!empty($filterKelas)) {
+            $query->whereHas('kelas', function ($q) use ($filterKelas) {
+                $q->whereIn('nama_kelas', $filterKelas);
+            });
+        }
+
+        $data        = $query->latest()->get();
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Pembagian Kelas');
+
+        $sheetTitle = !empty($filterKelas) ? 'Kelas ' . implode(' & ', $filterKelas) : 'Pembagian Kelas';
+        $sheet->setTitle(substr($sheetTitle, 0, 31)); // max 31 karakter untuk nama sheet Excel
 
         $headers = ['No', 'Nama', 'NISN', 'Predikat', 'Kelas'];
         foreach ($headers as $i => $h) {
@@ -150,17 +205,33 @@ class LaporanController extends Controller
             $this->setCell($sheet, 5, $row, $r->kelas?->nama_kelas);
         }
 
-        return $this->downloadExcel($spreadsheet, 'laporan-pembagian-kelas.xlsx');
+        $filename = !empty($filterKelas)
+            ? 'laporan-pembagian-kelas-' . implode('-', $filterKelas) . '.xlsx'
+            : 'laporan-pembagian-kelas.xlsx';
+
+        return $this->downloadExcel($spreadsheet, $filename);
     }
 
-    public function excelNilai()
+    public function excelNilai(Request $request)
     {
-        $data        = NilaiTes::with('siswa')->latest()->get();
+        $filterKelas = $request->input('kelas', []);
+
+        $query = NilaiTes::with('siswa.kelas');
+
+        if (!empty($filterKelas)) {
+            $query->whereHas('siswa.kelas', function ($q) use ($filterKelas) {
+                $q->whereIn('nama_kelas', $filterKelas);
+            });
+        }
+
+        $data        = $query->latest()->get();
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Rekap Nilai Tes');
 
-        $headers = ['No', 'Nama Siswa', 'IPA', 'IPS', 'Bhs. Indonesia', 'Matematika',
+        $sheetTitle = !empty($filterKelas) ? 'Nilai Kelas ' . implode(' & ', $filterKelas) : 'Rekap Nilai Tes';
+        $sheet->setTitle(substr($sheetTitle, 0, 31));
+
+        $headers = ['No', 'Nama Siswa', 'Kelas', 'IPA', 'IPS', 'Bhs. Indonesia', 'Matematika',
                     'Doa Iftitah', 'Tahiyat Awal', 'Qunut', 'Baca Al-Quran',
                     'Fatihah 4', 'Doa', 'Menulis', 'Total'];
         foreach ($headers as $i => $h) {
@@ -174,21 +245,26 @@ class LaporanController extends Controller
             $row = $i + 2;
             $this->setCell($sheet, 1,  $row, $i + 1);
             $this->setCell($sheet, 2,  $row, $r->siswa?->nama ?? '-');
-            $this->setCell($sheet, 3,  $row, $r->ipa);
-            $this->setCell($sheet, 4,  $row, $r->ips);
-            $this->setCell($sheet, 5,  $row, $r->bhs_indonesia);
-            $this->setCell($sheet, 6,  $row, $r->matematika);
-            $this->setCell($sheet, 7,  $row, $r->doa_iftitah);
-            $this->setCell($sheet, 8,  $row, $r->tahiyat_awal);
-            $this->setCell($sheet, 9,  $row, $r->qunut);
-            $this->setCell($sheet, 10, $row, $r->membaca_al_quran);
-            $this->setCell($sheet, 11, $row, $r->fatihah_4);
-            $this->setCell($sheet, 12, $row, $r->doa);
-            $this->setCell($sheet, 13, $row, $r->menulis);
-            $this->setCell($sheet, 14, $row, $total);
+            $this->setCell($sheet, 3,  $row, $r->siswa?->kelas?->nama_kelas ?? '-');
+            $this->setCell($sheet, 4,  $row, $r->ipa);
+            $this->setCell($sheet, 5,  $row, $r->ips);
+            $this->setCell($sheet, 6,  $row, $r->bhs_indonesia);
+            $this->setCell($sheet, 7,  $row, $r->matematika);
+            $this->setCell($sheet, 8,  $row, $r->doa_iftitah);
+            $this->setCell($sheet, 9,  $row, $r->tahiyat_awal);
+            $this->setCell($sheet, 10, $row, $r->qunut);
+            $this->setCell($sheet, 11, $row, $r->membaca_al_quran);
+            $this->setCell($sheet, 12, $row, $r->fatihah_4);
+            $this->setCell($sheet, 13, $row, $r->doa);
+            $this->setCell($sheet, 14, $row, $r->menulis);
+            $this->setCell($sheet, 15, $row, $total);
         }
 
-        return $this->downloadExcel($spreadsheet, 'laporan-nilai-tes.xlsx');
+        $filename = !empty($filterKelas)
+            ? 'laporan-nilai-tes-' . implode('-', $filterKelas) . '.xlsx'
+            : 'laporan-nilai-tes.xlsx';
+
+        return $this->downloadExcel($spreadsheet, $filename);
     }
 
     // ===== HELPERS =====

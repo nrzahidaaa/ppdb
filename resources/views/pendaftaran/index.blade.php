@@ -11,7 +11,6 @@
         <h2 style="font-size:16px;font-weight:700;">Daftar Pendaftar</h2>
         <p style="font-size:12px;color:var(--text-light);">Kelola semua data pendaftaran siswa baru</p>
     </div>
-    <a href="{{ route('pendaftaran.create') }}" class="btn btn-primary">➕ Tambah Pendaftar</a>
 </div>
 
 <div style="display:flex;gap:10px;align-items:center;">
@@ -36,22 +35,12 @@
                 <label class="form-label">Status</label>
                 <select name="status" class="form-control form-select">
                     <option value="">Semua Status</option>
-                    <option value="pending" {{ request('status')=='pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="verifikasi" {{ request('status')=='verifikasi' ? 'selected' : '' }}>Verifikasi</option>
-                    <option value="lulus" {{ request('status')=='lulus' ? 'selected' : '' }}>Lulus</option>
-                    <option value="ditolak" {{ request('status')=='ditolak' ? 'selected' : '' }}>Ditolak</option>
+                    <option value="pending"     {{ request('status')=='pending'     ? 'selected' : '' }}>Pending</option>
+                    <option value="verifikasi"  {{ request('status')=='verifikasi'  ? 'selected' : '' }}>Verifikasi</option>
+                    <option value="lulus"       {{ request('status')=='lulus'       ? 'selected' : '' }}>Lulus</option>
+                    <option value="ditolak"     {{ request('status')=='ditolak'     ? 'selected' : '' }}>Ditolak</option>
                 </select>
             </div>
-
-            <!-- <div style="min-width:160px;">
-                <label class="form-label">Jurusan</label>
-                <select name="jurusan" class="form-control form-select">
-                    <option value="">Semua Jurusan</option>
-                    <option value="MIPA" {{ request('jurusan')=='MIPA' ? 'selected' : '' }}>MIPA</option>
-                    <option value="IPS" {{ request('jurusan')=='IPS' ? 'selected' : '' }}>IPS</option>
-                    <option value="Bahasa" {{ request('jurusan')=='Bahasa' ? 'selected' : '' }}>Bahasa</option>
-                </select>
-            </div> -->
 
             <button type="submit" class="btn btn-primary">🔍 Filter</button>
             <a href="{{ route('pendaftaran.index') }}" class="btn btn-outline">Reset</a>
@@ -66,12 +55,14 @@
             <thead>
                 <tr>
                     <th>No. Daftar</th>
-                    <th>Nama Lengkap</th>
+                    <th>Nama Lengkap</th> 
+                    <th>NISN</th>
                     <th>Tempat Tanggal Lahir</th>
                     <th>Nama Orang Tua</th>
                     <th>Asal Sekolah</th>
                     <th>Alamat</th>
                     <th>Jalur</th>
+                    <th>Berkas</th>
                     <th>Status</th>
                     <th>Aksi</th>
                 </tr>
@@ -85,15 +76,16 @@
                     </td>
 
                     <td>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="avatar-sm" style="background:var(--primary);">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar me-2">
                                 {{ strtoupper(substr($p->nama, 0, 2)) }}
                             </div>
-                            <div>
-                                <div style="font-weight:600;">{{ $p->nama }}</div>
-                                <div style="font-size:10px;color:var(--text-light);">{{ $p->nisn }}</div>
-                            </div>
+                            {{ $p->nama }}
                         </div>
+                    </td>
+
+                    <td>
+                        {{ $p->nisn }}
                     </td>
 
                     <td>
@@ -111,35 +103,57 @@
                         </span>
                     </td>
 
+<td>
+    @php
+        $berkasLengkap = !empty($p->nisn_file)
+            && !empty($p->kartu_keluarga)
+            && !empty($p->akta_kelahiran)
+            && !empty($p->foto)
+            && !empty($p->ijazah);
+    @endphp
+
+    @if($berkasLengkap)
+        <span class="badge badge-success">Sudah upload</span>
+    @else
+        <span class="badge badge-warning">Belum upload</span>
+    @endif
+</td>
+
                     <td>
                         <form method="POST" action="{{ route('pendaftaran.updateStatus', $p->id) }}">
                             @csrf
                             @method('PATCH')
                             <select name="status" class="form-control form-select" style="width:130px;font-size:11px;padding:5px 10px;" onchange="this.form.submit()">
-                                <option value="pending" {{ $p->status=='pending' ? 'selected' : '' }}>⏳ Pending</option>
+                                <option value="pending"    {{ $p->status=='pending'    ? 'selected' : '' }}>⏳ Pending</option>
                                 <option value="verifikasi" {{ $p->status=='verifikasi' ? 'selected' : '' }}>🔵 Verifikasi</option>
-                                <option value="lulus" {{ $p->status=='lulus' ? 'selected' : '' }}>✅ Lulus</option>
-                                <option value="ditolak" {{ $p->status=='ditolak' ? 'selected' : '' }}>❌ Ditolak</option>
+                                <option value="lulus"      {{ $p->status=='lulus'      ? 'selected' : '' }}>✅ Lulus</option>
+                                <option value="ditolak"    {{ $p->status=='ditolak'    ? 'selected' : '' }}>❌ Ditolak</option>
                             </select>
                         </form>
                     </td>
 
                     <td>
-                        <div style="display:flex;gap:6px;">
-                            <a href="{{ route('pendaftaran.show', $p->id) }}" class="btn btn-outline btn-sm">👁</a>
-                            <a href="{{ route('pendaftaran.edit', $p->id) }}" class="btn btn-secondary btn-sm">✏️</a>
-                            <form method="POST" action="{{ route('pendaftaran.destroy', $p->id) }}" onsubmit="return confirm('Yakin hapus data ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-                            </form>
-                        </div>
-                    </td>
+    <div style="display:flex;gap:6px;">
+        <a href="{{ route('pendaftaran.show', $p->id) }}" class="btn btn-outline btn-sm">👁</a>
+
+        @if(!empty($p->nisn_file) || !empty($p->kartu_keluarga) || !empty($p->akta_kelahiran) || !empty($p->foto) || !empty($p->ijazah))
+            <a href="{{ route('pendaftaran.berkas', $p->id) }}" class="btn btn-secondary btn-sm">📁</a>
+        @endif
+
+        <a href="{{ route('pendaftaran.edit', $p->id) }}" class="btn btn-secondary btn-sm">✏️</a>
+
+        <form method="POST" action="{{ route('pendaftaran.destroy', $p->id) }}" onsubmit="return confirm('Yakin hapus data ini?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+        </form>
+    </div>
+</td>
                 </tr>
 
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center text-muted">
+                    <td colspan="10" class="text-center text-muted">
                         Tidak ada data pendaftar
                     </td>
                 </tr>

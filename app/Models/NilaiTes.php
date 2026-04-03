@@ -10,6 +10,7 @@ class NilaiTes extends Model
     protected $primaryKey = 'id_nilai';
 
     protected $fillable = [
+        'nisn',
         'id_siswa',
         'bhs_indonesia',
         'matematika',
@@ -24,7 +25,11 @@ class NilaiTes extends Model
         'surah_pendek',
         'doa',
         'menulis',
+        'total_nilai',
         'tanggal_input',
+        'status_hasil',
+        'keterangan_hasil',
+        
     ];
 
     protected $casts = [
@@ -36,20 +41,20 @@ class NilaiTes extends Model
         return $this->belongsTo(Pendaftaran::class, 'id_siswa');
     }
 
-    // Hitung total nilai akademik
+    
     public function getTotalAkademikAttribute()
     {
         return $this->ipa + $this->ips + $this->bhs_indonesia + $this->matematika;
     }
 
-    // Hitung total nilai agama
+    
     public function getTotalAgamaAttribute()
     {
         return $this->doa_iftitah + $this->tahiyat_awal + $this->qunut +
-               $this->membaca_al_quran + $this->fatihah_4 + $this->doa + $this->menulis;
+            $this->membaca_al_quran + $this->fatihah_4 + $this->doa + $this->menulis;
     }
 
-    // Hitung rata-rata semua nilai
+
     public function getRataRataAttribute()
     {
         $total = $this->total_akademik + $this->total_agama;

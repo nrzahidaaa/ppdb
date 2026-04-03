@@ -11,16 +11,16 @@
     <div style="background:white;border-radius:20px;padding:50px;text-align:center;max-width:480px;width:100%;box-shadow:var(--shadow-md);">
         <div style="font-size:60px;margin-bottom:16px;">🎉</div>
         <h1 style="font-size:22px;font-weight:800;color:var(--primary);margin-bottom:8px;">Pendaftaran Berhasil!</h1>
-        <p style="color:var(--text-light);margin-bottom:24px;">Terima kasih telah mendaftar. Simpan nomor pendaftaran Anda.</p>
+        <p style="color:var(--text-light);margin-bottom:24px;">Terima kasih telah mendaftar. Simpan NISN Anda untuk cek pengumuman.</p>
 
         <div style="background:var(--bg);border-radius:12px;padding:20px;margin-bottom:24px;">
-            <div style="font-size:12px;color:var(--text-light);margin-bottom:6px;">Nomor Pendaftaran Anda</div>
-            <div style="font-size:24px;font-weight:800;color:var(--primary);">{{ session('nomor') }}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-bottom:6px;">NISN Anda</div>
+        <div style="font-size:24px;font-weight:800;color:var(--primary);">{{ session('nisn') }}</div>
             <div style="font-size:14px;font-weight:600;margin-top:6px;">{{ session('nama') }}</div>
         </div>
 
         <div class="alert alert-warning" style="text-align:left;margin-bottom:24px;">
-            ⚠️ Harap simpan nomor pendaftaran ini untuk keperluan verifikasi berkas.
+            ⚠️ Harap simpan NISN ini untuk keperluan verifikasi berkas.
         </div>
 
         <a href="{{ route('beranda') }}" class="btn btn-primary" style="width:100%;justify-content:center;">← Kembali ke Beranda</a>

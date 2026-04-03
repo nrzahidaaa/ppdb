@@ -8,10 +8,12 @@
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #33528A; padding-bottom: 10px; }
         .header h1 { font-size: 16px; color: #33528A; margin: 0 0 4px; }
         .header p { margin: 0; font-size: 10px; color: #666; }
+        .filter-info { display: inline-block; background: #eef2f7; color: #33528A; border-radius: 4px; padding: 3px 10px; font-size: 10px; margin-top: 4px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { background: #33528A; color: white; padding: 6px 4px; text-align: center; font-size: 9px; }
         td { padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 9px; text-align: center; }
         td:nth-child(2) { text-align: left; }
+        td:nth-child(3) { text-align: left; }
         tr:nth-child(even) td { background: #f8f9fc; }
         .total { font-weight: bold; color: #33528A; }
         .footer { margin-top: 20px; font-size: 9px; color: #999; text-align: right; }
@@ -21,6 +23,7 @@
 <div class="header">
     <h1>LAPORAN REKAP NILAI TES SELEKSI</h1>
     <p>Tahun Ajaran 2025/2026 &nbsp;|&nbsp; Dicetak: {{ now()->format('d/m/Y H:i') }}</p>
+    <span class="filter-info">Kelas: {{ $filterLabel ?? 'Semua Kelas' }}</span>
 </div>
 
 <table>
@@ -28,6 +31,7 @@
         <tr>
             <th>No</th>
             <th>Nama Siswa</th>
+            <th>Kelas</th>
             <th>IPA</th>
             <th>IPS</th>
             <th>B.Indo</th>
@@ -52,6 +56,7 @@
         <tr>
             <td>{{ $i + 1 }}</td>
             <td>{{ $r->siswa?->nama ?? '-' }}</td>
+            <td>{{ $r->siswa?->kelas?->nama_kelas ?? '-' }}</td>
             <td>{{ $r->ipa }}</td>
             <td>{{ $r->ips }}</td>
             <td>{{ $r->bhs_indonesia }}</td>
@@ -72,16 +77,3 @@
 <div class="footer">Total: {{ $data->count() }} siswa &nbsp;|&nbsp; Dicetak oleh sistem PPDB Online</div>
 </body>
 </html>
-```
-
----
-
-Simpan semua file di lokasi masing-masing. Struktur foldernya:
-```
-resources/views/laporan/
-├── index.blade.php
-└── pdf/
-    ├── pendaftar.blade.php
-    ├── klasifikasi.blade.php
-    ├── pembagian.blade.php
-    └── nilai.blade.php

@@ -30,29 +30,41 @@ foreach ($rows as $index => $row) {
         ]);
     }
 
-    $nisn = preg_replace('/\D/', '', (string) ($row[1] ?? ''));
-    $namaSiswa = trim((string) ($row[2] ?? ''));
+   $nisn = preg_replace('/\D/', '', trim((string) ($row[1] ?? '')));
+$namaSiswa = trim((string) ($row[2] ?? ''));
 
-    if ($nisn === '' && $namaSiswa === '') {
-        continue;
-    }
+$nisnNormal = ltrim($nisn, '0');
 
-    $siswa = Pendaftaran::whereRaw('REPLACE(TRIM(nisn), " ", "") = ?', [$nisn])->first();
+$siswa = null;
 
-    if (!$siswa && $namaSiswa !== '') {
-        $siswa = Pendaftaran::whereRaw('LOWER(TRIM(nama)) LIKE ?', ['%' . strtolower($namaSiswa) . '%'])->first();
-    }
+if ($nisn !== '') {
+    $siswa = Pendaftaran::where(function ($q) use ($nisn, $nisnNormal) {
+        $q->whereRaw('REPLACE(TRIM(nisn), " ", "") = ?', [$nisn]);
 
-    if (!$siswa) {
-        Log::warning('Siswa tidak ditemukan saat import nilai tes', [
-            'baris' => $index + 1,
-            // 'nisn' => $nisn,
-            'nama' => $namaSiswa,
-            'row' => $row,
-        ]);
-        continue;
-    }
+        if ($nisnNormal !== '') {
+            $q->orWhereRaw(
+                'TRIM(LEADING "0" FROM REPLACE(TRIM(nisn), " ", "")) = ?',
+                [$nisnNormal]
+            );
+        }
+    })->first();
+}
 
+if (!$siswa && $namaSiswa !== '') {
+    $siswa = Pendaftaran::whereRaw('LOWER(TRIM(nama)) = ?', [strtolower($namaSiswa)])->first();
+}
+
+if (!$siswa) {
+    $gagal++;
+    Log::warning('Siswa tidak ditemukan saat import nilai tes', [
+        'baris' => $index + 1,
+        'nisn_excel' => $nisn,
+        'nisn_normal' => $nisnNormal,
+        'nama' => $namaSiswa,
+        'row' => $row,
+    ]);
+    continue;
+}
     $nilai = [
         'bhs_indonesia'    => is_numeric($row[3] ?? null) ? $row[3] : 0,
         'matematika'       => is_numeric($row[4] ?? null) ? $row[4] : 0,

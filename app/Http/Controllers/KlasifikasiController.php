@@ -23,10 +23,10 @@ class KlasifikasiController extends Controller
         $hasilSession = session('hasil', []);
         $hasilMap = collect($hasilSession)->keyBy('nama');
 
-        $hasilKlasifikasi = Pendaftaran::with('nilaiTes')
-            ->whereIn('status', ['lulus','ditolak'])
-            ->orderByDesc('updated_at')
-            ->get();
+       $hasilKlasifikasi = Pendaftaran::with('nilaiTes')
+    ->whereIn('status', ['pending', 'lulus', 'ditolak'])
+    ->orderByDesc('updated_at')
+    ->get();
 
         // Data training = semua siswa yang sudah punya nilai tes
         $trainingData = NilaiTes::all()->map(fn($n) => [
@@ -119,23 +119,19 @@ foreach ($pendaftar as $p) {
         'menulis'          => (int) $n->menulis,
     ];
 
-    $result = $nb->predict($inputData);
-
-    if (!$result || !isset($result['predicted'])) {
-        continue;
-    }
+  $result = $nb->predict($inputData);
+$probabilitas = $result['probabilities'] ?? [];
 
     $total = array_sum($inputData);
     $status = 'lulus';
 
- if ($total >= 950) {
+if ($total >= 900) {
     $predikat = 'Unggul';
-} elseif ($total >= 700) {
+} elseif ($total >= 710) {
     $predikat = 'Baik';
 } else {
     $predikat = 'Cukup';
 }
-
     $p->update([
         'status' => $status,
         'predikat' => $predikat,
@@ -151,7 +147,7 @@ foreach ($pendaftar as $p) {
     'total_nilai' => $total,
     'predikat' => $predikat,
     'status' => $status,
-    'probabilitas' => $result['probabilities'] ?? [],
+    'probabilitas' => $probabilitas,
 ];
 
     $diproses++;

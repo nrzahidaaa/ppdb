@@ -125,9 +125,9 @@ $probabilitas = $result['probabilities'] ?? [];
     $total = array_sum($inputData);
     $status = 'lulus';
 
-if ($total >= 900) {
+if ($total >= 920) {
     $predikat = 'Unggul';
-} elseif ($total >= 710) {
+} elseif ($total >= 730) {
     $predikat = 'Baik';
 } else {
     $predikat = 'Cukup';
@@ -160,68 +160,81 @@ if ($total >= 900) {
 
 public function pembagianKelas()
 {
-    $kelas = Kelas::with(['siswa'])->get(); // relasi siswa
+    $kelas = Kelas::with(['siswa'])->withCount('siswa')->get();
 
     return view('klasifikasi.pembagian', compact('kelas'));
 }
 
 public function prosesKelas()
 {
-    $kelas = \App\Models\Kelas::whereIn('nama_kelas', ['7A','7B','7C'])->get();
+    $kelas = \App\Models\Kelas::whereIn('nama_kelas', ['7A', '7B', '7C'])->get();
 
     if ($kelas->isEmpty()) {
         return back()->with('error', 'Kelas 7A, 7B, 7C belum dibuat!');
     }
 
+    \App\Models\Pendaftaran::query()->update(['id_kelas' => null]);
+
     $unggul = \App\Models\Pendaftaran::where('status', 'lulus')
         ->where('predikat', 'Unggul')
-        ->whereNull('id_kelas')
         ->get();
 
     $baik = \App\Models\Pendaftaran::where('status', 'lulus')
         ->where('predikat', 'Baik')
-        ->whereNull('id_kelas')
         ->get();
 
     $cukup = \App\Models\Pendaftaran::where('status', 'lulus')
         ->where('predikat', 'Cukup')
-        ->whereNull('id_kelas')
         ->get();
 
-    // Stratified: bergantian Unggul-Baik-Cukup per kelas
     $kelasList = $kelas->values();
     $jumlahKelas = $kelasList->count();
     $diproses = 0;
 
-    // Distribusi per predikat ke semua kelas secara round-robin
     foreach ([$unggul, $baik, $cukup] as $kelompok) {
         $idx = 0;
+
         foreach ($kelompok as $siswa) {
             $k = $kelasList[$idx % $jumlahKelas];
-            
-            // Cek kapasitas
+
             $terisi = \App\Models\Pendaftaran::where('id_kelas', $k->id)->count();
-            if ($terisi >= $k->kuota) {
-                // Cari kelas lain yang masih ada sisa
+
+            if ($terisi >= $k->kouta) {
                 $found = false;
+
                 for ($i = 1; $i < $jumlahKelas; $i++) {
                     $kAlt = $kelasList[($idx + $i) % $jumlahKelas];
                     $terisiAlt = \App\Models\Pendaftaran::where('id_kelas', $kAlt->id)->count();
-                    if ($terisiAlt < $kAlt->kuota) {
+
+                    if ($terisiAlt < $kAlt->kouta) {
                         $k = $kAlt;
                         $found = true;
                         break;
                     }
                 }
-                if (!$found) continue;
+
+                if (!$found) {
+                    continue;
+                }
             }
 
-            $siswa->update(['id_kelas' => $k->id]);
+            $siswa->id_kelas = $k->id;
+            $siswa->save();
+
             $idx++;
             $diproses++;
         }
     }
 
-    return back()->with('success', "$diproses siswa berhasil dibagi ke kelas 7A, 7B, 7C secara stratified!");
+    dd([
+    'total' => App\Models\Pendaftaran::count(),
+    'lulus' => App\Models\Pendaftaran::where('status', 'lulus')->count(),
+    'unggul' => App\Models\Pendaftaran::where('predikat', 'Unggul')->count(),
+    'baik' => App\Models\Pendaftaran::where('predikat', 'Baik')->count(),
+    'cukup' => App\Models\Pendaftaran::where('predikat', 'Cukup')->count(),
+    'unggul_lulus' => App\Models\Pendaftaran::where('status', 'lulus')->where('predikat', 'Unggul')->count(),
+    'baik_lulus' => App\Models\Pendaftaran::where('status', 'lulus')->where('predikat', 'Baik')->count(),
+    'cukup_lulus' => App\Models\Pendaftaran::where('status', 'lulus')->where('predikat', 'Cukup')->count(),
+]);
 }
 }

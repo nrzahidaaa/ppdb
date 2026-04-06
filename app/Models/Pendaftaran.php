@@ -31,6 +31,7 @@ protected $fillable = [
     'catatan_revisi',
     'predikat',
     'total_nilai',
+    'id_kelas',
 ];
 
     protected $casts = [

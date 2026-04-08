@@ -160,32 +160,55 @@ if ($total >= 920) {
 
 public function pembagianKelas()
 {
-    $kelas = Kelas::with(['siswa'])->withCount('siswa')->get();
+    $kelas = Kelas::with([
+        'siswa' => function ($q) {
+            $q->orderByRaw("
+                CASE predikat
+                    WHEN 'Unggul' THEN 1
+                    WHEN 'Baik' THEN 2
+                    WHEN 'Cukup' THEN 3
+                    ELSE 4
+                END
+            ")->orderBy('nama');
+        }
+    ])->withCount('siswa')->get();
 
     return view('klasifikasi.pembagian', compact('kelas'));
 }
 
 public function prosesKelas()
 {
-    $kelas = \App\Models\Kelas::whereIn('nama_kelas', ['7A', '7B', '7C'])->get();
+    $kelas = Kelas::whereIn('nama_kelas', ['7A', '7B', '7C'])
+        ->orderBy('nama_kelas')
+        ->get();
 
     if ($kelas->isEmpty()) {
         return back()->with('error', 'Kelas 7A, 7B, 7C belum dibuat!');
     }
 
-    \App\Models\Pendaftaran::query()->update(['id_kelas' => null]);
+    // reset pembagian kelas
+    Pendaftaran::query()->update(['id_kelas' => null]);
 
-    $unggul = \App\Models\Pendaftaran::where('status', 'lulus')
+    $unggul = Pendaftaran::with('nilaiTes')
+        ->where('status', 'lulus')
         ->where('predikat', 'Unggul')
-        ->get();
+        ->get()
+        ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
+        ->values();
 
-    $baik = \App\Models\Pendaftaran::where('status', 'lulus')
+    $baik = Pendaftaran::with('nilaiTes')
+        ->where('status', 'lulus')
         ->where('predikat', 'Baik')
-        ->get();
+        ->get()
+        ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
+        ->values();
 
-    $cukup = \App\Models\Pendaftaran::where('status', 'lulus')
+    $cukup = Pendaftaran::with('nilaiTes')
+        ->where('status', 'lulus')
         ->where('predikat', 'Cukup')
-        ->get();
+        ->get()
+        ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
+        ->values();
 
     $kelasList = $kelas->values();
     $jumlahKelas = $kelasList->count();
@@ -197,16 +220,16 @@ public function prosesKelas()
         foreach ($kelompok as $siswa) {
             $k = $kelasList[$idx % $jumlahKelas];
 
-            $terisi = \App\Models\Pendaftaran::where('id_kelas', $k->id)->count();
+            $terisi = Pendaftaran::where('id_kelas', $k->id)->count();
 
-            if ($terisi >= $k->kouta) {
+            if ($terisi >= $k->kuota) {
                 $found = false;
 
                 for ($i = 1; $i < $jumlahKelas; $i++) {
                     $kAlt = $kelasList[($idx + $i) % $jumlahKelas];
-                    $terisiAlt = \App\Models\Pendaftaran::where('id_kelas', $kAlt->id)->count();
+                    $terisiAlt = Pendaftaran::where('id_kelas', $kAlt->id)->count();
 
-                    if ($terisiAlt < $kAlt->kouta) {
+                    if ($terisiAlt < $kAlt->kuota) {
                         $k = $kAlt;
                         $found = true;
                         break;
@@ -218,23 +241,17 @@ public function prosesKelas()
                 }
             }
 
-            $siswa->id_kelas = $k->id;
-            $siswa->save();
+            $siswa->update([
+                'id_kelas' => $k->id
+            ]);
 
-            $idx++;
             $diproses++;
+            $idx++;
         }
     }
 
-    dd([
-    'total' => App\Models\Pendaftaran::count(),
-    'lulus' => App\Models\Pendaftaran::where('status', 'lulus')->count(),
-    'unggul' => App\Models\Pendaftaran::where('predikat', 'Unggul')->count(),
-    'baik' => App\Models\Pendaftaran::where('predikat', 'Baik')->count(),
-    'cukup' => App\Models\Pendaftaran::where('predikat', 'Cukup')->count(),
-    'unggul_lulus' => App\Models\Pendaftaran::where('status', 'lulus')->where('predikat', 'Unggul')->count(),
-    'baik_lulus' => App\Models\Pendaftaran::where('status', 'lulus')->where('predikat', 'Baik')->count(),
-    'cukup_lulus' => App\Models\Pendaftaran::where('status', 'lulus')->where('predikat', 'Cukup')->count(),
-]);
+    return redirect()
+        ->route('klasifikasi.pembagian')
+        ->with('success', $diproses . ' siswa berhasil dibagi ke kelas!');
 }
 }

@@ -257,5 +257,77 @@ public function berkas($id)
     $pendaftaran = Pendaftaran::findOrFail($id);
     return view('pendaftaran.berkas', compact('pendaftaran'));
 }
+
+public function formEdit()
+{
+    return view('pendaftaran.edit_publik');
+}
+
+public function cariEdit(Request $request)
+{
+    $request->validate(['nisn' => 'required|string']);
+    
+    $data = Pendaftaran::where('nisn', $request->nisn)->first();
+    
+    if (!$data) {
+        return back()->with('error', 'NISN tidak ditemukan!');
+    }
+
+    if ($data->status !== 'pending') {
+
+        return back()->with('error', 'Data tidak dapat diedit karena sudah diproses!');
+    }
+
+return redirect()->route('pendaftaran.editPublik', $data->nisn);}
+
+public function editPublik($nisn)
+{
+    $data = Pendaftaran::where('nisn', $nisn)->firstOrFail();
+
+    if ($data->status !== 'pending') {
+        return redirect()->route('beranda')->with('error', 'Data tidak dapat diedit karena sudah diproses!');
+    }
+
+    return view('pendaftaran.edit_publik_form', compact('data'));
+}
+
+public function updatePublik(Request $request, $nomor)
+{
+    $data = Pendaftaran::where('nisn', $nisn)->firstOrFail();
+
+    if ($data->status !== 'pending') {
+        return redirect()->route('beranda')->with('error', 'Data tidak dapat diedit!');
+    }
+
+    $request->validate([
+        'nama'           => 'required|string|max:100',
+        'tempat_lahir'   => 'nullable|string|max:100',
+        'tanggal_lahir'  => 'nullable|date',
+        'jenis_kelamin'  => 'required|in:L,P',
+        'nama_orang_tua' => 'nullable|string|max:100',
+        'asal_sekolah'   => 'required|string|max:150',
+        'alamat'         => 'nullable|string',
+        'jalur'          => 'required|in:reguler,prestasi',
+        'no_telp'        => 'nullable|string|max:20',
+    ]);
+
+    $data->update([
+        'nama'           => $request->nama,
+        'tempat_lahir'   => $request->tempat_lahir,
+        'tanggal_lahir'  => $request->tanggal_lahir,
+        'jenis_kelamin'  => $request->jenis_kelamin,
+        'nama_orang_tua' => $request->nama_orang_tua,
+        'asal_sekolah'   => $request->asal_sekolah,
+        'alamat'         => $request->alamat,
+        'jalur'          => $request->jalur,
+        'no_telp'        => $request->no_telp,
+    ]);
+
+    return redirect()->route('pendaftaran.sukses')
+        ->with('nomor', $nomor)
+        ->with('nama', $data->nama)
+        ->with('pesan', 'Data berhasil diperbarui!');
+}
+
 }
 

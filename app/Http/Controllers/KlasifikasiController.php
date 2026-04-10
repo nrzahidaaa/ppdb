@@ -125,13 +125,14 @@ $probabilitas = $result['probabilities'] ?? [];
     $total = array_sum($inputData);
     $status = 'lulus';
 
-if ($total >= 920) {
-    $predikat = 'Unggul';
-} elseif ($total >= 730) {
-    $predikat = 'Baik';
-} else {
-    $predikat = 'Cukup';
-}
+    if ($total >= 920) {
+        $predikat = 'Unggul';
+    } elseif ($total >= 730) {
+        $predikat = 'Baik';
+    } else {
+        $predikat = 'Cukup';
+    }
+    
     $p->update([
         'status' => $status,
         'predikat' => $predikat,

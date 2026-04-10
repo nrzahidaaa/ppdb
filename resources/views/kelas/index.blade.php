@@ -47,17 +47,17 @@
                     <td>{{ $i + 1 }}</td>
                     <td style="font-weight:600;">{{ $k->nama_kelas }}</td>
                     <td>{{ $k->wali_kelas ?? '-' }}</td>
-                    <td>{{ $k->kouta }}</td>
+                    <td>{{ $k->kuota }}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:8px;">
                             @php
-                                $pct = $k->kouta > 0 ? min(100, ($k->siswa_count / $k->kouta) * 100) : 0;
+                                $pct = $k->kuota > 0 ? min(100, ($k->siswa_count / $k->kuota) * 100) : 0;
                                 $pct = round($pct);
                             @endphp
                             <div style="flex:1;background:var(--border);border-radius:99px;height:6px;min-width:60px;">
                                 <div class="progress-bar-fill" data-width="{{ $pct }}"></div>
                             </div>
-                            <span style="font-size:11px;font-weight:600;">{{ $k->siswa_count ?? 0 }}/{{ $k->kouta }}</span>
+                            <span style="font-size:11px;font-weight:600;">{{ $k->siswa_count ?? 0 }}/{{ $k->kuota }}</span>
                         </div>
                     </td>
                     <td>
@@ -67,7 +67,7 @@
                                 data-id="{{ $k->id }}"
                                 data-nama="{{ $k->nama_kelas }}"
                                 data-wali="{{ $k->wali_kelas }}"
-                                data-kouta="{{ $k->kouta }}">✏️</button>
+                                data-kuota="{{ $k->kuota }}">✏️</button>
                             <form method="POST" action="{{ route('master.kelas.destroy', $k->id) }}" onsubmit="return confirm('Yakin hapus kelas ini?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm">🗑</button>
@@ -102,7 +102,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Kuota <span style="color:red;">*</span></label>
-                <input type="number" name="kouta" class="form-control" placeholder="contoh: 36" min="1" max="50" required>
+                <input type="number" name="kuota" class="form-control" placeholder="contoh: 36" min="1" max="50" required>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
                 <button type="button" onclick="closeModal('modal-tambah-kelas')" class="btn btn-outline">Batal</button>
@@ -131,7 +131,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Kuota <span style="color:red;">*</span></label>
-                <input type="number" name="kouta" id="edit-kelas-kouta" class="form-control" min="1" max="50" required>
+                <input type="number" name="kuota" id="edit-kelas-kuota" class="form-control" min="1" max="50" required>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
                 <button type="button" onclick="closeModal('modal-edit-kelas')" class="btn btn-outline">Batal</button>
@@ -149,7 +149,7 @@ document.querySelectorAll('.btn-edit-kelas').forEach(function(btn) {
     btn.addEventListener('click', function() {
         document.getElementById('edit-kelas-nama').value  = this.dataset.nama;
         document.getElementById('edit-kelas-wali').value  = this.dataset.wali;
-        document.getElementById('edit-kelas-kouta').value = this.dataset.kouta;
+        document.getElementById('edit-kelas-kuota').value = this.dataset.kuota;
         document.getElementById('form-edit-kelas').action = '/master/kelas/' + this.dataset.id;
         openModal('modal-edit-kelas');
     });

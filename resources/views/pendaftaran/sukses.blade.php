@@ -24,6 +24,10 @@
         </div>
 
         <a href="{{ route('beranda') }}" class="btn btn-primary" style="width:100%;justify-content:center;">← Kembali ke Beranda</a>
+
+        <a href="{{ route('pendaftaran.formEdit') }}" class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;">
+    ✏️ Edit Data Saya
+        </a>
     </div>
 </body>
 </html>

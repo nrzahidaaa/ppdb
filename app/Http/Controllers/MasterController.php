@@ -64,7 +64,7 @@ class MasterController extends Controller
             // 'jurusan'    => 'required|in:MIPA,IPS,Bahasa',
             'kapasitas'  => 'required|integer|min:1|max:50',
         ]);
-        Kelas::create($request->only('nama_kelas', 'jurusan', 'wali_kelas', 'kouta'));
+        Kelas::create($request->only('nama_kelas', 'jurusan', 'wali_kelas', 'kuota'));
         return redirect()->route('master.index')->with('success', 'Kelas berhasil ditambahkan!');
     }
 
@@ -76,7 +76,7 @@ class MasterController extends Controller
             // 'jurusan'    => 'required|in:MIPA,IPS,Bahasa',
             'kuota' => 'required|integer|min:1|max:50',
         ]);
-        $kelas->update($request->only('nama_kelas', 'jurusan', 'wali_kelas', 'kouta'));
+        $kelas->update($request->only('nama_kelas', 'jurusan', 'wali_kelas', 'kuota'));
         return redirect()->route('master.index')->with('success', 'Kelas berhasil diperbarui!');
     }
 

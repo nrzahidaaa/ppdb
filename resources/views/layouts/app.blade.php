@@ -9,6 +9,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/ppdb.css') }}">
     @stack('styles')
+
+
+    <style>
+/* Override pagination */
+nav[role="navigation"] { display:none !important; }
+nav svg { display:none !important; }
+.pagination-wrapper nav ul,
+.pagination-wrapper nav ol {
+    display:flex !important;
+    align-items:center !important;
+    gap:4px !important;
+    list-style:none !important;
+    padding:0 !important;
+    margin:0 !important;
+}
+.pagination-wrapper nav ul li a,
+.pagination-wrapper nav ul li span,
+.pagination-wrapper nav ol li a,
+.pagination-wrapper nav ol li span {
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-width:32px !important;
+    height:32px !important;
+    padding:0 8px !important;
+    border-radius:8px !important;
+    border:1px solid #e5e7eb !important;
+    font-size:12px !important;
+    font-weight:600 !important;
+    color:#33528A !important;
+    text-decoration:none !important;
+}
+.pagination-wrapper nav ul li span[aria-current],
+.pagination-wrapper nav ol li span[aria-current] {
+    background:#33528A !important;
+    color:white !important;
+    border-color:#33528A !important;
+}
+</style>
+
 </head>
 <body>
 

@@ -5,6 +5,47 @@
 
 @section('content')
 
+<style>
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.pagination li a,
+.pagination li span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: .2s;
+}
+.pagination li.active span {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.pagination li a:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.pagination li.disabled span {
+    color: #ccc;
+    border-color: #eee;
+    cursor: not-allowed;
+}
+</style>
+
 {{-- Header --}}
 <div class="section-header">
     <div>

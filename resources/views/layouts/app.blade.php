@@ -95,6 +95,11 @@ nav svg { display:none !important; }
             <span>🏫</span> Data Kelas
         </a>
 
+        <a href="{{ route('nilai-tes.index') }}"
+           class="nav-item {{ request()->routeIs('nilai-tes.*') ? 'active' : '' }}">
+            <span>📝</span> Nilai Tes
+        </a>
+
         <div class="nav-label">Proses Seleksi</div>
 
         <a href="{{ route('klasifikasi.index') }}"
@@ -114,10 +119,6 @@ nav svg { display:none !important; }
             <span>📊</span> Laporan
         </a>
 
-        <a href="{{ route('nilai-tes.index') }}"
-           class="nav-item {{ request()->routeIs('nilai-tes.*') ? 'active' : '' }}">
-            <span>📝</span> Nilai Tes
-        </a>
     </nav>
 
     <div class="sidebar-bottom">

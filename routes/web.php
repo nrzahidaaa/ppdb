@@ -21,15 +21,19 @@ Route::post('/daftar', [PendaftaranController::class, 'storePublik'])->name('pen
 // Edit data diri publik
 Route::get('/daftar/edit', [PendaftaranController::class, 'formEdit'])->name('pendaftaran.formEdit');
 Route::post('/daftar/edit', [PendaftaranController::class, 'cariEdit'])->name('pendaftaran.cariEdit');
-Route::get('/daftar/edit/{nomor}', [PendaftaranController::class, 'editPublik'])->name('pendaftaran.editPublik');
-Route::put('/daftar/edit/{nomor}', [PendaftaranController::class, 'updatePublik'])->name('pendaftaran.updatePublik');
-
+Route::get('/daftar/edit/{nisn}', [PendaftaranController::class, 'editPublik'])->name('pendaftaran.editPublik');
+Route::put('/daftar/edit/{nisn}', [PendaftaranController::class, 'updatePublik'])->name('pendaftaran.updatePublik');
+    
 Route::get('/pengumuman', [PendaftaranController::class, 'pengumuman'])->name('pengumuman');
 Route::post('/pengumuman/cek', [PendaftaranController::class, 'cekPengumuman'])->name('pengumuman.cek');
 
 Route::get('/daftar/sukses', function() {
     return view('pendaftaran.sukses');
 })->name('pendaftaran.sukses');
+
+Route::get('/profil-sekolah', function () {
+    return view('landing.profil-sekolah');
+})->name('profil.sekolah');
 
 
 // ===== AUTH ROUTES (Breeze) =====

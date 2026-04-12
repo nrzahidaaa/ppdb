@@ -54,12 +54,25 @@
     </div>
 </div>
 
-<div style="display:flex;gap:10px;align-items:center;">
-    <form method="POST" action="{{ route('pendaftaran.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">
+@if(session('success'))
+    <div class="alert alert-success" style="margin-bottom:16px;">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger" style="margin-bottom:16px;">
+        {{ session('error') }}
+    </div>
+@endif
+
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+    <form method="POST" action="{{ route('pendaftaran.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         @csrf
         <input type="file" name="file" accept=".xlsx,.xls" class="form-control" style="width:220px;">
         <button type="submit" class="btn btn-secondary">📥 Import Siswa</button>
     </form>
+
     <a href="{{ route('pendaftaran.create') }}" class="btn btn-primary">➕ Tambah Pendaftar</a>
 </div>
 
@@ -69,17 +82,24 @@
         <form method="GET" action="{{ route('pendaftaran.index') }}" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
             <div style="flex:1;min-width:200px;">
                 <label class="form-label" style="margin-bottom:5px;">Cari Nama / No. Pendaftaran</label>
-                <input type="text" name="search" class="form-control" placeholder="Cari..." value="{{ request('search') }}">
+                <input
+                    type="text"
+                    name="search"
+                    class="form-control"
+                    placeholder="Cari..."
+                    value="{{ request('search') }}"
+                >
             </div>
 
-            <div style="min-width:160px;">
+            <div style="min-width:180px;">
                 <label class="form-label">Status</label>
                 <select name="status" class="form-control form-select">
                     <option value="">Semua Status</option>
-                    <option value="pending"     {{ request('status')=='pending'     ? 'selected' : '' }}>Pending</option>
-                    <option value="verifikasi"  {{ request('status')=='verifikasi'  ? 'selected' : '' }}>Verifikasi</option>
-                    <option value="lulus"       {{ request('status')=='lulus'       ? 'selected' : '' }}>Lulus</option>
-                    <option value="ditolak"     {{ request('status')=='ditolak'     ? 'selected' : '' }}>Ditolak</option>
+                    <option value="waiting_proses" {{ request('status') == 'waiting_proses' ? 'selected' : '' }}>Waiting Proses</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="verifikasi" {{ request('status') == 'verifikasi' ? 'selected' : '' }}>Verifikasi</option>
+                    <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
+                    <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                 </select>
             </div>
 
@@ -96,7 +116,7 @@
             <thead>
                 <tr>
                     <th>No. Daftar</th>
-                    <th>Nama Lengkap</th> 
+                    <th>Nama Lengkap</th>
                     <th>NISN</th>
                     <th>Tempat Tanggal Lahir</th>
                     <th>Nama Orang Tua</th>
@@ -125,9 +145,7 @@
                         </div>
                     </td>
 
-                    <td>
-                        {{ $p->nisn }}
-                    </td>
+                    <td>{{ $p->nisn }}</td>
 
                     <td>
                         {{ $p->tempat_lahir }},
@@ -139,62 +157,84 @@
                     <td>{{ $p->alamat }}</td>
 
                     <td>
-                        <span class="badge {{ $p->jalur == 'prestasi' ? 'badge-warning' : 'badge-secondary' }}">
-                            {{ ucfirst($p->jalur) }}
+                        <span class="badge {{ strtolower($p->jalur ?? '') == 'prestasi' ? 'badge-warning' : 'badge-secondary' }}">
+                            {{ ucfirst($p->jalur ?? '-') }}
                         </span>
                     </td>
 
-<td>
-    @php
-        $berkasLengkap = !empty($p->nisn_file)
-            && !empty($p->kartu_keluarga)
-            && !empty($p->akta_kelahiran)
-            && !empty($p->foto)
-            && !empty($p->ijazah);
-    @endphp
+                    <td>
+                        @php
+                            $berkasLengkap = !empty($p->nisn_file)
+                                && !empty($p->kartu_keluarga)
+                                && !empty($p->akta_kelahiran)
+                                && !empty($p->foto)
+                                && !empty($p->ijazah);
+                        @endphp
 
-    @if($berkasLengkap)
-        <span class="badge badge-success">Sudah upload</span>
-    @else
-        <span class="badge badge-warning">Belum upload</span>
-    @endif
-</td>
+                        @if($berkasLengkap)
+                            <span class="badge badge-success">Sudah upload</span>
+                        @else
+                            <span class="badge badge-warning">Belum upload</span>
+                        @endif
+                    </td>
 
                     <td>
-                        <form method="POST" action="{{ route('pendaftaran.updateStatus', $p->id) }}">
+                        <form method="POST" action="{{ route('pendaftaran.updateStatus', $p->id) }}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                             @csrf
                             @method('PATCH')
-                            <select name="status" class="form-control form-select" style="width:130px;font-size:11px;padding:5px 10px;" onchange="this.form.submit()">
-                                <option value="pending"    {{ $p->status=='pending'    ? 'selected' : '' }}>⏳ Pending</option>
-                                <option value="verifikasi" {{ $p->status=='verifikasi' ? 'selected' : '' }}>🔵 Verifikasi</option>
-                                <option value="lulus"      {{ $p->status=='lulus'      ? 'selected' : '' }}>✅ Lulus</option>
-                                <option value="ditolak"    {{ $p->status=='ditolak'    ? 'selected' : '' }}>❌ Ditolak</option>
+
+                            <select
+                                name="status"
+                                class="form-control form-select status-select"
+                                style="width:155px;font-size:11px;padding:5px 10px;"
+                                data-target="catatan-{{ $p->id }}"
+                            >
+                                <option value="waiting_proses" {{ $p->status == 'waiting_proses' ? 'selected' : '' }}>⏳ Waiting Proses</option>
+                                <option value="pending" {{ $p->status == 'pending' ? 'selected' : '' }}>⌛ Pending</option>
+                                <option value="verifikasi" {{ $p->status == 'verifikasi' ? 'selected' : '' }}>🔵 Verifikasi</option>
+                                <option value="lulus" {{ $p->status == 'lulus' ? 'selected' : '' }}>✅ Lulus</option>
+                                <option value="ditolak" {{ $p->status == 'ditolak' ? 'selected' : '' }}>❌ Ditolak</option>
                             </select>
+
+                            <div
+                                id="catatan-{{ $p->id }}"
+                                class="{{ $p->status === 'pending' ? '' : 'd-none' }}"
+                                style="width:100%; margin-top:6px;">
+                               <textarea
+                                    name="catatan"
+                                    class="form-control"
+                                    rows="2"
+                                    placeholder="Masukkan catatan untuk siswa..."
+                                    style="font-size:11px;"
+                                >{{ old('catatan', $p->catatan) }}</textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:6px;">Simpan</button>
                         </form>
                     </td>
 
                     <td>
-    <div style="display:flex;gap:6px;">
-        <a href="{{ route('pendaftaran.show', $p->id) }}" class="btn btn-outline btn-sm">👁</a>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{{ route('pendaftaran.show', $p->id) }}" class="btn btn-outline btn-sm">👁</a>
 
-        @if(!empty($p->nisn_file) || !empty($p->kartu_keluarga) || !empty($p->akta_kelahiran) || !empty($p->foto) || !empty($p->ijazah))
-            <a href="{{ route('pendaftaran.berkas', $p->id) }}" class="btn btn-secondary btn-sm">📁</a>
-        @endif
+                            @if(!empty($p->nisn_file) || !empty($p->kartu_keluarga) || !empty($p->akta_kelahiran) || !empty($p->foto) || !empty($p->ijazah))
+                                <a href="{{ route('pendaftaran.berkas', $p->id) }}" class="btn btn-secondary btn-sm">📁</a>
+                            @endif
 
-        <a href="{{ route('pendaftaran.edit', $p->id) }}" class="btn btn-secondary btn-sm">✏️</a>
+                            <a href="{{ route('pendaftaran.edit', $p->id) }}" class="btn btn-secondary btn-sm">✏️</a>
 
-        <form method="POST" action="{{ route('pendaftaran.destroy', $p->id) }}" onsubmit="return confirm('Yakin hapus data ini?')">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-        </form>
-    </div>
-</td>
+                            <form method="POST" action="{{ route('pendaftaran.destroy', $p->id) }}" onsubmit="return confirm('Yakin hapus data ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
 
                 @empty
                 <tr>
-                    <td colspan="10" class="text-center text-muted">
+                    <td colspan="11" class="text-center text-muted">
                         Tidak ada data pendaftar
                     </td>
                 </tr>
@@ -218,5 +258,29 @@
         @endif
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selects = document.querySelectorAll('.status-select');
+
+    selects.forEach(select => {
+        function toggleCatatan() {
+            const targetId = select.dataset.target;
+            const catatanBox = document.getElementById(targetId);
+
+            if (!catatanBox) return;
+
+            if (select.value === 'pending') {
+                catatanBox.classList.remove('d-none');
+            } else {
+                catatanBox.classList.add('d-none');
+            }
+        }
+
+        select.addEventListener('change', toggleCatatan);
+        toggleCatatan();
+    });
+});
+</script>
 
 @endsection

@@ -53,6 +53,22 @@
     border-radius: 999px;
     font-weight: 600;
 }
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.badge-secondary {
+    background: #e5e7eb;
+    color: #6b7280;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+}
 </style>
 
 <div class="section-header">
@@ -68,6 +84,27 @@
             @csrf
             <input type="file" name="file" accept=".xlsx,.xls" class="form-control" style="width:200px;">
             <button type="submit" class="btn btn-secondary">📥 Import Excel</button>
+
+            <a href="{{ route('nilai-tes.template') }}"
+            style="
+                display:inline-flex;
+                align-items:center;
+                gap:8px;
+                padding:10px 14px;
+                border-radius:10px;
+                background:#ecfdf5;
+                color:#059669;
+                font-size:13px;
+                font-weight:600;
+                text-decoration:none;
+                border:1px solid #d1fae5;
+                transition:.2s;
+            "
+            onmouseover="this.style.background='#d1fae5'"
+            onmouseout="this.style.background='#ecfdf5'"
+            >
+                ⬇️ Template Excel
+            </a>
         </form>
     </div>
 </div>
@@ -81,6 +118,30 @@
 @if($errors->any())
 <div class="alert alert-danger" style="margin-bottom:16px;">❌ {{ $errors->first() }}</div>
 @endif
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0 24px;">
+    
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--primary);">{{ $totalNilaiTes }}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">📋 Total Nilai</div>
+    </div>
+
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--success);">{{ $totalLulus }}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">✅ Lulus</div>
+    </div>
+
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:#e05454;">{{ $totalTidakLulus }}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">❌ Tidak Lulus</div>
+    </div>
+
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:#f59e0b;">{{ $totalBelumDinilai }}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">⏳ Belum Dinilai</div>
+    </div>
+
+</div>
 
 <div class="card">
     <div class="table-wrapper">
@@ -139,9 +200,19 @@ $total = $nilai->bhs_indonesia + $nilai->matematika + $nilai->ipa + $nilai->ips 
 @endphp
 <td><strong>{{ $total }}</strong></td>
                     <td>
-                        <span class="badge {{ $nilai->status_hasil == 'lulus' ? 'badge-success' : 'badge-danger' }}">
-                            {{ ucfirst($nilai->status_hasil) }}
-                        </span>
+                        @php
+                            $statusHasil = $nilai->status_hasil ?? '';
+                        @endphp
+
+                        @if($statusHasil === 'lulus')
+                            <span class="badge badge-success">Lulus</span>
+                        @elseif(in_array($statusHasil, ['ditolak', 'tidak_lulus']))
+                            <span class="badge badge-danger">Tidak Lulus</span>
+                        @elseif($statusHasil === 'pending')
+                            <span class="badge badge-warning">Pending</span>
+                        @else
+                            <span class="badge badge-secondary">-</span>
+                        @endif
                     </td>
                     <td>
                         <form method="POST" action="{{ route('nilai-tes.destroy', $nilai->id_nilai) }}" onsubmit="return confirm('Yakin hapus data ini?')">

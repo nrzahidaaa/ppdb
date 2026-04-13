@@ -12,35 +12,49 @@ class KlasifikasiController extends Controller
 {
     public function index()
     {
-        $pending = Pendaftaran::where('status', 'pending')->count();
-        $lulus   = Pendaftaran::where('status', 'lulus')->count();
-        $ditolak = Pendaftaran::where('status', 'ditolak')->count();
-        $kelas   = Kelas::withCount('siswa')->get();
-        $unggul  = Pendaftaran::where('predikat', 'Unggul')->count();
-        $baik    = Pendaftaran::where('predikat', 'Baik')->count();
-        $cukup   = Pendaftaran::where('predikat', 'Cukup')->count();
+        // Statistik status
+        $pending    = Pendaftaran::where('status', 'pending')->count();
+        $lulus      = Pendaftaran::where('status', 'lulus')->count();
+        $tidakLulus = Pendaftaran::whereIn('status', ['ditolak', 'tidak_lulus'])->count();
+
+        $kelas = Kelas::withCount('siswa')->get();
+
+        // Statistik predikat hanya untuk siswa lulus
+        $unggul = Pendaftaran::where('status', 'lulus')
+            ->where('predikat', 'Unggul')
+            ->count();
+
+        $baik = Pendaftaran::where('status', 'lulus')
+            ->where('predikat', 'Baik')
+            ->count();
+
+        $cukup = Pendaftaran::where('status', 'lulus')
+            ->where('predikat', 'Cukup')
+            ->count();
 
         $hasilSession = session('hasil', []);
         $hasilMap = collect($hasilSession)->keyBy('nama');
 
-       $hasilKlasifikasi = Pendaftaran::with('nilaiTes')
-    ->whereIn('status', ['pending', 'lulus', 'ditolak'])
-    ->orderByDesc('updated_at')
-    ->get();
+        // HASIL KLASIFIKASI hanya tampilkan siswa LULUS
+        $hasilKlasifikasi = Pendaftaran::with('nilaiTes')
+            ->where('status', 'lulus')
+            ->whereNotNull('predikat')
+            ->orderByDesc('updated_at')
+            ->get();
 
-        // Data training = semua siswa yang sudah punya nilai tes
+        // Data training
         $trainingData = NilaiTes::all()->map(fn($n) => [
-            'ipa'              => $n->ipa,
-            'ips'              => $n->ips,
-            'bhs_indonesia'    => $n->bhs_indonesia,
-            'matematika'       => $n->matematika,
-            'doa_iftitah'      => $n->doa_iftitah,
-            'tahiyat_awal'     => $n->tahiyat_awal,
-            'qunut'            => $n->qunut,
-            'membaca_al_quran' => $n->membaca_al_quran,
-            'fatihah_4'        => $n->fatihah_4,
-            'doa'              => $n->doa,
-            'menulis'          => $n->menulis,
+            'ipa'              => (int) $n->ipa,
+            'ips'              => (int) $n->ips,
+            'bhs_indonesia'    => (int) $n->bhs_indonesia,
+            'matematika'       => (int) $n->matematika,
+            'doa_iftitah'      => (int) $n->doa_iftitah,
+            'tahiyat_awal'     => (int) $n->tahiyat_awal,
+            'qunut'            => (int) $n->qunut,
+            'membaca_al_quran' => (int) $n->membaca_al_quran,
+            'fatihah_4'        => (int) $n->fatihah_4,
+            'doa'              => (int) $n->doa,
+            'menulis'          => (int) $n->menulis,
         ])->toArray();
 
         $nb = new NaiveBayes();
@@ -52,15 +66,21 @@ class KlasifikasiController extends Controller
         }
 
         return view('klasifikasi.index', compact(
-            'pending', 'lulus', 'ditolak',
-            'kelas', 'unggul', 'baik', 'cukup', 'modelInfo', 
-            'hasilKlasifikasi', 'hasilMap'
+            'pending',
+            'lulus',
+            'tidakLulus',
+            'kelas',
+            'unggul',
+            'baik',
+            'cukup',
+            'modelInfo',
+            'hasilKlasifikasi',
+            'hasilMap'
         ));
     }
 
     public function proses(Request $request)
     {
-        
         $allNilai = NilaiTes::all()->map(fn($n) => [
             'bhs_indonesia'    => (int) $n->bhs_indonesia,
             'matematika'       => (int) $n->matematika,
@@ -75,7 +95,6 @@ class KlasifikasiController extends Controller
             'surah_pendek'     => (int) $n->surah_pendek,
             'doa'              => (int) $n->doa,
             'menulis'          => (int) $n->menulis,
-            
         ])->toArray();
 
         if (count($allNilai) < 3) {
@@ -86,173 +105,192 @@ class KlasifikasiController extends Controller
         $nb = new NaiveBayes();
         $nb->train($allNilai);
 
-        $pendaftar = Pendaftaran::where('status', 'pending')
-            ->whereHas('nilaiTes', function ($q) {
-                $q->where('status_hasil', 'lulus');
-            })
-            ->with(['nilaiTes' => function ($q) {
-                $q->where('status_hasil', 'lulus');
-            }])
+        // Hanya siswa lulus yang diproses klasifikasi
+        $pendaftar = Pendaftaran::where('status', 'lulus')
+            ->whereHas('nilaiTes')
+            ->with('nilaiTes')
             ->get();
-        $diproses  = 0;
-        $hasil     = [];
 
-foreach ($pendaftar as $p) {
-    if (!$p->nilaiTes) continue;
-    if ($p->nilaiTes->status_hasil !== 'lulus') continue;
+        $diproses = 0;
+        $hasil = [];
 
-    $n = $p->nilaiTes;
+        foreach ($pendaftar as $p) {
+            if (!$p->nilaiTes) {
+                continue;
+            }
 
-    $inputData = [
-        'bhs_indonesia'    => (int) $n->bhs_indonesia,
-        'matematika'       => (int) $n->matematika,
-        'ipa'              => (int) $n->ipa,
-        'ips'              => (int) $n->ips,
-        'agama'            => (int) $n->agama,
-        'doa_iftitah'      => (int) $n->doa_iftitah,
-        'tahiyat_awal'     => (int) $n->tahiyat_awal,
-        'qunut'            => (int) $n->qunut,
-        'membaca_al_quran' => (int) $n->membaca_al_quran,
-        'fatihah_4'        => (int) $n->fatihah_4,
-        'surah_pendek'     => (int) $n->surah_pendek,
-        'doa'              => (int) $n->doa,
-        'menulis'          => (int) $n->menulis,
-    ];
+            $n = $p->nilaiTes;
 
-  $result = $nb->predict($inputData);
-$probabilitas = $result['probabilities'] ?? [];
+            $inputData = [
+                'bhs_indonesia'    => (int) $n->bhs_indonesia,
+                'matematika'       => (int) $n->matematika,
+                'ipa'              => (int) $n->ipa,
+                'ips'              => (int) $n->ips,
+                'agama'            => (int) $n->agama,
+                'doa_iftitah'      => (int) $n->doa_iftitah,
+                'tahiyat_awal'     => (int) $n->tahiyat_awal,
+                'qunut'            => (int) $n->qunut,
+                'membaca_al_quran' => (int) $n->membaca_al_quran,
+                'fatihah_4'        => (int) $n->fatihah_4,
+                'surah_pendek'     => (int) $n->surah_pendek,
+                'doa'              => (int) $n->doa,
+                'menulis'          => (int) $n->menulis,
+            ];
 
-    $total = array_sum($inputData);
-    $status = 'lulus';
+            $result = $nb->predict($inputData);
+            $probabilitas = $result['probabilities'] ?? [];
 
-    if ($total >= 920) {
-        $predikat = 'Unggul';
-    } elseif ($total >= 730) {
-        $predikat = 'Baik';
-    } else {
-        $predikat = 'Cukup';
-    }
-    
-    $p->update([
-        'status' => $status,
-        'predikat' => $predikat,
-    ]);
+            $total = array_sum($inputData);
 
-    $n->update([
-        'total_nilai' => $total,
-    ]);
+            if ($total >= 920) {
+                $predikat = 'Unggul';
+            } elseif ($total >= 730) {
+                $predikat = 'Baik';
+            } else {
+                $predikat = 'Cukup';
+            }
 
-    $hasil[] = [
-    'nama' => $p->nama,
-    'nisn' => $p->nisn,
-    'total_nilai' => $total,
-    'predikat' => $predikat,
-    'status' => $status,
-    'probabilitas' => $probabilitas,
-];
+            $p->update([
+                'status'   => 'lulus',
+                'predikat' => $predikat,
+            ]);
 
-    $diproses++;
-}
+            $n->update([
+                'total_nilai' => $total,
+            ]);
+
+            $hasil[] = [
+                'nama'         => $p->nama,
+                'nisn'         => $p->nisn,
+                'total_nilai'  => $total,
+                'predikat'     => $predikat,
+                'status'       => 'lulus',
+                'probabilitas' => $probabilitas,
+            ];
+
+            $diproses++;
+        }
 
         return redirect()->route('klasifikasi.index')
-            ->with('success', $diproses.' siswa berhasil diklasifikasi dengan Naive Bayes!')
+            ->with('success', $diproses . ' siswa lulus berhasil diklasifikasi dengan Naive Bayes!')
             ->with('hasil', $hasil);
     }
 
-public function pembagianKelas()
-{
-    $kelas = Kelas::with([
-        'siswa' => function ($q) {
-            $q->orderByRaw("
-                CASE predikat
-                    WHEN 'Unggul' THEN 1
-                    WHEN 'Baik' THEN 2
-                    WHEN 'Cukup' THEN 3
-                    ELSE 4
-                END
-            ")->orderBy('nama');
+        public function pembagianKelas()
+        {
+            $kelas = Kelas::with([
+                'siswa' => function ($q) {
+                    $q->where('status', 'lulus')
+                        ->orderByRaw("
+                            CASE predikat
+                                WHEN 'Unggul' THEN 1
+                                WHEN 'Baik' THEN 2
+                                WHEN 'Cukup' THEN 3
+                                ELSE 4
+                            END
+                        ")
+                        ->orderBy('nama');
+                }
+            ])->withCount([
+                'siswa as total_siswa' => function ($q) {
+                    $q->where('status', 'lulus');
+                },
+                'siswa as unggul_count' => function ($q) {
+                    $q->where('status', 'lulus')->where('predikat', 'Unggul');
+                },
+                'siswa as baik_count' => function ($q) {
+                    $q->where('status', 'lulus')->where('predikat', 'Baik');
+                },
+                'siswa as cukup_count' => function ($q) {
+                    $q->where('status', 'lulus')->where('predikat', 'Cukup');
+                },
+            ])->get();
+
+            $totalLulus = Pendaftaran::where('status', 'lulus')->count();
+
+            return view('klasifikasi.pembagian', compact('kelas', 'totalLulus'));
         }
-    ])->withCount('siswa')->get();
 
-    return view('klasifikasi.pembagian', compact('kelas'));
-}
+    public function prosesKelas()
+    {
+        $kelas = Kelas::whereIn('nama_kelas', ['7A', '7B', '7C'])
+            ->orderBy('nama_kelas')
+            ->get();
 
-public function prosesKelas()
-{
-    $kelas = Kelas::whereIn('nama_kelas', ['7A', '7B', '7C'])
-        ->orderBy('nama_kelas')
-        ->get();
+        if ($kelas->isEmpty()) {
+            return back()->with('error', 'Kelas 7A, 7B, 7C belum dibuat!');
+        }
 
-    if ($kelas->isEmpty()) {
-        return back()->with('error', 'Kelas 7A, 7B, 7C belum dibuat!');
-    }
+        // Reset pembagian kelas hanya untuk siswa lulus
+        Pendaftaran::where('status', 'lulus')->update(['id_kelas' => null]);
 
-    // reset pembagian kelas
-    Pendaftaran::query()->update(['id_kelas' => null]);
+        $unggul = Pendaftaran::with('nilaiTes')
+            ->where('status', 'lulus')
+            ->where('predikat', 'Unggul')
+            ->get()
+            ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
+            ->values();
 
-    $unggul = Pendaftaran::with('nilaiTes')
-        ->where('status', 'lulus')
-        ->where('predikat', 'Unggul')
-        ->get()
-        ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
-        ->values();
+        $baik = Pendaftaran::with('nilaiTes')
+            ->where('status', 'lulus')
+            ->where('predikat', 'Baik')
+            ->get()
+            ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
+            ->values();
 
-    $baik = Pendaftaran::with('nilaiTes')
-        ->where('status', 'lulus')
-        ->where('predikat', 'Baik')
-        ->get()
-        ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
-        ->values();
+        $cukup = Pendaftaran::with('nilaiTes')
+            ->where('status', 'lulus')
+            ->where('predikat', 'Cukup')
+            ->get()
+            ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
+            ->values();
 
-    $cukup = Pendaftaran::with('nilaiTes')
-        ->where('status', 'lulus')
-        ->where('predikat', 'Cukup')
-        ->get()
-        ->sortByDesc(fn($s) => optional($s->nilaiTes)->total_nilai ?? 0)
-        ->values();
+        $kelasList = $kelas->values();
+        $jumlahKelas = $kelasList->count();
+        $diproses = 0;
 
-    $kelasList = $kelas->values();
-    $jumlahKelas = $kelasList->count();
-    $diproses = 0;
+        foreach ([$unggul, $baik, $cukup] as $kelompok) {
+            $idx = 0;
 
-    foreach ([$unggul, $baik, $cukup] as $kelompok) {
-        $idx = 0;
+            foreach ($kelompok as $siswa) {
+                $k = $kelasList[$idx % $jumlahKelas];
 
-        foreach ($kelompok as $siswa) {
-            $k = $kelasList[$idx % $jumlahKelas];
+                $terisi = Pendaftaran::where('id_kelas', $k->id)
+                    ->where('status', 'lulus')
+                    ->count();
 
-            $terisi = Pendaftaran::where('id_kelas', $k->id)->count();
+                if ($terisi >= $k->kuota) {
+                    $found = false;
 
-            if ($terisi >= $k->kuota) {
-                $found = false;
+                    for ($i = 1; $i < $jumlahKelas; $i++) {
+                        $kAlt = $kelasList[($idx + $i) % $jumlahKelas];
+                        $terisiAlt = Pendaftaran::where('id_kelas', $kAlt->id)
+                            ->where('status', 'lulus')
+                            ->count();
 
-                for ($i = 1; $i < $jumlahKelas; $i++) {
-                    $kAlt = $kelasList[($idx + $i) % $jumlahKelas];
-                    $terisiAlt = Pendaftaran::where('id_kelas', $kAlt->id)->count();
+                        if ($terisiAlt < $kAlt->kuota) {
+                            $k = $kAlt;
+                            $found = true;
+                            break;
+                        }
+                    }
 
-                    if ($terisiAlt < $kAlt->kuota) {
-                        $k = $kAlt;
-                        $found = true;
-                        break;
+                    if (!$found) {
+                        continue;
                     }
                 }
 
-                if (!$found) {
-                    continue;
-                }
+                $siswa->update([
+                    'id_kelas' => $k->id
+                ]);
+
+                $diproses++;
+                $idx++;
             }
-
-            $siswa->update([
-                'id_kelas' => $k->id
-            ]);
-
-            $diproses++;
-            $idx++;
         }
-    }
 
-    return redirect()
-        ->route('klasifikasi.pembagian')
-        ->with('success', $diproses . ' siswa berhasil dibagi ke kelas!');
-}
+        return redirect()
+            ->route('klasifikasi.pembagian')
+            ->with('success', $diproses . ' siswa lulus berhasil dibagi ke kelas!');
+    }
 }

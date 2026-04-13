@@ -6,15 +6,31 @@ use App\Models\NilaiTes;
 use App\Models\Pendaftaran;
 use App\Imports\NilaiTesImport;
 use Illuminate\Http\Request;
+use App\Exports\NilaiTesTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class NilaiTesController extends Controller
 {
-    public function index()
-    {
-        $nilaiTes    = NilaiTes::with('siswa')->paginate(15);
-        $pendaftaran = Pendaftaran::orderBy('nama')->get();
-        return view('nilai_tes.index', compact('nilaiTes', 'pendaftaran'));
-    }
+  public function index()
+{
+    $nilaiTes    = NilaiTes::with('siswa')->paginate(15);
+    $pendaftaran = Pendaftaran::orderBy('nama')->get();
+
+    // 🔥 TAMBAHAN RINGKASAN
+    $totalNilaiTes = NilaiTes::count();
+    $totalLulus = NilaiTes::where('status_hasil', 'lulus')->count();
+    $totalTidakLulus = NilaiTes::whereIn('status_hasil', ['ditolak', 'tidak_lulus'])->count();
+    $totalBelumDinilai = NilaiTes::whereNull('status_hasil')->count();
+
+    return view('nilai_tes.index', compact(
+        'nilaiTes',
+        'pendaftaran',
+        'totalNilaiTes',
+        'totalLulus',
+        'totalTidakLulus',
+        'totalBelumDinilai'
+    ));
+}
 
     public function store(Request $request)
     {
@@ -99,5 +115,10 @@ class NilaiTesController extends Controller
         NilaiTes::findOrFail($id)->delete();
         return redirect()->route('nilai-tes.index')
                          ->with('success', 'Data nilai berhasil dihapus.');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new NilaiTesTemplateExport, 'template_nilai_tes.xlsx');
     }
 }

@@ -74,7 +74,7 @@
     <div class="card" style="padding:20px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
             <div style="width:40px;height:40px;background:#fee2e2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">❌</div>
-            <span class="badge badge-danger" style="font-size:10px;">Ditolak</span>
+            <span class="badge badge-danger" style="font-size:10px;">Tidak Lulus</span>
         </div>
         <div style="font-size:32px;font-weight:800;color:#e05454;">{{ $totalDitolak }}</div>
         <div style="font-size:12px;color:var(--text-light);margin-top:4px;">Tidak Lulus</div>

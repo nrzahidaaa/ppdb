@@ -99,7 +99,7 @@
                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="verifikasi" {{ request('status') == 'verifikasi' ? 'selected' : '' }}>Verifikasi</option>
                     <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
-                    <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                    <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Tidak Lulus</option>
                 </select>
             </div>
 
@@ -190,10 +190,10 @@
                                 data-target="catatan-{{ $p->id }}"
                             >
                                 <option value="waiting_proses" {{ $p->status == 'waiting_proses' ? 'selected' : '' }}>⏳ Waiting Proses</option>
-                                <option value="pending" {{ $p->status == 'pending' ? 'selected' : '' }}>⌛ Pending</option>
+                                <option value="pending" {{ $p->status == 'pending' ? 'selected' : '' }}> ⚠️ Pending</option>
                                 <option value="verifikasi" {{ $p->status == 'verifikasi' ? 'selected' : '' }}>🔵 Verifikasi</option>
                                 <option value="lulus" {{ $p->status == 'lulus' ? 'selected' : '' }}>✅ Lulus</option>
-                                <option value="ditolak" {{ $p->status == 'ditolak' ? 'selected' : '' }}>❌ Ditolak</option>
+                                <option value="ditolak" {{ $p->status == 'ditolak' ? 'selected' : '' }}>❌ Tidak Lulus</option>
                             </select>
 
                             <div

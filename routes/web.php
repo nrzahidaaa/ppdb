@@ -91,5 +91,6 @@ Route::get('/laporan/excel/nilai', [LaporanController::class, 'excelNilai'])->na
     Route::post('/nilai-tes', [NilaiTesController::class, 'store'])->name('nilai-tes.store');
     Route::post('/nilai-tes/import', [NilaiTesController::class, 'importExcel'])->name('nilai-tes.import');
     Route::delete('/nilai-tes/{id}', [NilaiTesController::class, 'destroy'])->name('nilai-tes.destroy');
-
+Route::get('/nilai-tes/template', [NilaiTesController::class, 'downloadTemplate'])
+    ->name('nilai-tes.template');
 });

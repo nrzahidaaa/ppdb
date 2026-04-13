@@ -22,6 +22,41 @@
     <button type="submit" class="btn btn-primary">🚀 Proses Pembagian Kelas</button>
 </form>
 
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0;">
+    @foreach($kelas as $k)
+        @php
+            $sisaKuota = max(($k->kuota ?? 0) - ($k->total_siswa ?? 0), 0);
+        @endphp
+
+        <div class="card" style="padding:18px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div style="font-size:18px;font-weight:800;color:var(--primary);">
+                    {{ $k->nama_kelas }}
+                </div>
+                <div style="font-size:12px;color:var(--text-light);">
+                    {{ $k->total_siswa }} / {{ $k->kuota }}
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;">
+                <div style="background:#f8fafc;border-radius:10px;padding:10px;text-align:center;">
+                    <div style="font-size:20px;font-weight:800;color:var(--text);">{{ $k->total_siswa }}</div>
+                    <div style="font-size:11px;color:var(--text-light);">Total Siswa</div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:10px;text-align:center;">
+                    <div style="font-size:20px;font-weight:800;color:#f59e0b;">{{ $sisaKuota }}</div>
+                    <div style="font-size:11px;color:var(--text-light);">Sisa Kuota</div>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <span class="badge" style="background:#eef9d7;color:#597001;">🏆 Unggul: {{ $k->unggul_count }}</span>
+                <span class="badge" style="background:#e6f7f5;color:#1f8f87;">⭐ Baik: {{ $k->baik_count }}</span>
+                <span class="badge" style="background:#eaf1ff;color:#33528A;">📝 Cukup: {{ $k->cukup_count }}</span>
+            </div>
+        </div>
+    @endforeach
+</div>
 <hr>
 
 @forelse($kelas as $k)

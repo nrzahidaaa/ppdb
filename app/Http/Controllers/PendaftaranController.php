@@ -77,17 +77,12 @@ class PendaftaranController extends Controller
     public function show($id)
     {
         $pendaftaran = Pendaftaran::findOrFail($id);
-         return redirect()->route('pendaftaran.edit', $id);
+        return view('pendaftaran.show', compact('pendaftaran'));
     }
 
     public function edit($id)
     {
         $pendaftaran = Pendaftaran::findOrFail($id);
-
-            if ($pendaftaran->status !== 'waiting_proses') {
-            return back()->with('error', 'Data hanya bisa diedit saat status Waiting Proses.');
-            }
-
         return view('pendaftaran.edit', compact('pendaftaran'));
     }
 

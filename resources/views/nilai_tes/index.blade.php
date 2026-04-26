@@ -169,66 +169,91 @@
                     <th>Aksi</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($nilaiTes as $i => $nilai)
-                <tr>
-                    <td>{{ $nilaiTes->firstItem() + $i }}</td>
-                    <td>
-                        <div style="font-weight:600;">{{ $nilai->siswa->nama ?? '-' }}</div>
-                        <div style="font-size:10px;color:var(--text-light);">{{ $nilai->siswa->nisn ?? '-' }}</div>
-                    </td>
-                    <td>{{ $nilai->bhs_indonesia }}</td>
-                    <td>{{ $nilai->matematika }}</td>
-                    <td>{{ $nilai->ipa }}</td>
-                    <td>{{ $nilai->ips }}</td>
-                    <td>{{ $nilai->agama }}</td>
-                    <td>{{ $nilai->doa_iftitah }}</td>
-                    <td>{{ $nilai->tahiyat_awal }}</td>
-                    <td>{{ $nilai->qunut }}</td>
-                    <td>{{ $nilai->membaca_al_quran }}</td>
-                    <td>{{ $nilai->fatihah_4 }}</td>
-                    <td>{{ $nilai->surah_pendek }}</td>
-                    <td>{{ $nilai->doa }}</td>
-                    <td>{{ $nilai->menulis }}</td>
-                    
-                    <td>{{ $nilai->tanggal_input?->format('d/m/Y') }}</td>
-                    @php
-$total = $nilai->bhs_indonesia + $nilai->matematika + $nilai->ipa + $nilai->ips +
-         $nilai->agama + $nilai->doa_iftitah + $nilai->tahiyat_awal + $nilai->qunut +
-         $nilai->membaca_al_quran + $nilai->fatihah_4 + $nilai->surah_pendek +
-         $nilai->doa + $nilai->menulis;
+<tbody>
+    @forelse($nilaiTes as $item)
+    @php
+    $nt = $item->nilaiTes;
 @endphp
-<td><strong>{{ $total }}</strong></td>
-                    <td>
-                        @php
-                            $statusHasil = $nilai->status_hasil ?? '';
-                        @endphp
+        <tr>
+            <td>{{ $loop->iteration + ($nilaiTes->firstItem() - 1) }}</td>
+            <td>{{ $item->nama ?? '-' }}</td>
 
-                        @if($statusHasil === 'lulus')
-                            <span class="badge badge-success">Lulus</span>
-                        @elseif(in_array($statusHasil, ['ditolak', 'tidak_lulus']))
-                            <span class="badge badge-danger">Tidak Lulus</span>
-                        @elseif($statusHasil === 'pending')
-                            <span class="badge badge-warning">Pending</span>
-                        @else
-                            <span class="badge badge-secondary">-</span>
-                        @endif
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ route('nilai-tes.destroy', $nilai->id_nilai) }}" onsubmit="return confirm('Yakin hapus data ini?')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="17" style="text-align:center;padding:40px;color:var(--text-light);">
-                        Belum ada data nilai. Import file Excel atau tambah manual.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
+            <td>{{ $item->nilaiTes->bhs_indonesia ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->matematika ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->ipa ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->ips ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->agama ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->doa_iftitah ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->tahiyat_awal ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->qunut ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->membaca_al_quran ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->fatihah_4 ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->surah_pendek ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->doa ?? '-' }}</td>
+            <td>{{ $item->nilaiTes->menulis ?? '-' }}</td>
+
+            <td>
+    {{ $nt && $nt->tanggal_input
+        ? \Carbon\Carbon::parse($nt->tanggal_input)->format('d-m-Y')
+        : '-' }}
+</td>
+
+        @php
+    $total = ($nt->bhs_indonesia ?? 0)
+        + ($nt->matematika ?? 0)
+        + ($nt->ipa ?? 0)
+        + ($nt->ips ?? 0)
+        + ($nt->agama ?? 0)
+        + ($nt->doa_iftitah ?? 0)
+        + ($nt->tahiyat_awal ?? 0)
+        + ($nt->qunut ?? 0)
+        + ($nt->membaca_al_quran ?? 0)
+        + ($nt->fatihah_4 ?? 0)
+        + ($nt->surah_pendek ?? 0)
+        + ($nt->doa ?? 0)
+        + ($nt->menulis ?? 0);
+
+    $statusHasil = $nt->status_hasil ?? '';
+@endphp
+
+<td><strong>{{ $total }}</strong></td>
+
+           <td>
+    @if($statusHasil === 'lulus')
+        <span class="badge badge-success">Lulus</span>
+    @elseif(in_array($statusHasil, ['ditolak', 'tidak_lulus']))
+        <span class="badge badge-danger">Tidak Lulus</span>
+    @elseif($statusHasil === 'pending')
+        <span class="badge badge-warning">Pending</span>
+    @else
+        <span class="badge badge-secondary">-</span>
+    @endif
+</td>
+
+    <td>
+    @if($item->nilaiTes && $item->nilaiTes->id_nilai)
+        <form method="POST"
+              action="{{ route('nilai-tes.destroy', $item->nilaiTes->id_nilai) }}"
+              onsubmit="return confirm('Yakin hapus data ini?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger btn-sm">
+                🗑
+            </button>
+        </form>
+    @else
+        <span class="text-muted">-</span>
+    @endif
+</td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="19" style="text-align:center;padding:40px;color:var(--text-light);">
+                Belum ada data nilai. Import file Excel atau tambah manual.
+            </td>
+        </tr>
+    @endforelse
+</tbody>
         </table>
     </div>
 

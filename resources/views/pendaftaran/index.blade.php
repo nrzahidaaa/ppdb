@@ -72,42 +72,52 @@
         <input type="file" name="file" accept=".xlsx,.xls" class="form-control" style="width:220px;">
         <button type="submit" class="btn btn-secondary">📥 Import Siswa</button>
     </form>
+    
+<a href="{{ route('pendaftaran.template') }}" class="btn btn-success">
+    Download Template
+</a>
 
     <a href="{{ route('pendaftaran.create') }}" class="btn btn-primary">➕ Tambah Pendaftar</a>
 </div>
 
+@if($notifRevisi > 0)
+    <div style="margin-bottom:16px;padding:12px 16px;background:#e8f4fd;border:1px solid #b6e0fe;border-radius:10px;color:#0c5460;font-weight:600;">
+        Ada {{ $notifRevisi }} data yang sudah diperbaiki siswa dan menunggu verifikasi ulang.
+    </div>
+@endif
+
 {{-- Filters --}}
 <div class="card" style="margin-bottom:20px;">
     <div class="card-body" style="padding:16px 20px;">
-        <form method="GET" action="{{ route('pendaftaran.index') }}" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-            <div style="flex:1;min-width:200px;">
-                <label class="form-label" style="margin-bottom:5px;">Cari Nama / No. Pendaftaran</label>
-                <input
-                    type="text"
-                    name="search"
-                    class="form-control"
-                    placeholder="Cari..."
-                    value="{{ request('search') }}"
-                >
-            </div>
+        <form method="GET" action="{{ route('pendaftaran.index') }}" class="d-flex gap-2 mb-3">
+    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama / no pendaftaran / NISN" class="form-control">
 
-            <div style="min-width:180px;">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-control form-select">
-                    <option value="">Semua Status</option>
-                    <option value="waiting_proses" {{ request('status') == 'waiting_proses' ? 'selected' : '' }}>Waiting Proses</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="verifikasi" {{ request('status') == 'verifikasi' ? 'selected' : '' }}>Verifikasi</option>
-                    <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
-                    <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Tidak Lulus</option>
-                </select>
-            </div>
+    <select name="status" class="form-control">
+        <option value="">Semua Status</option>
+        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+        <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
+        <option value="tidak_lulus" {{ request('status') == 'tidak_lulus' ? 'selected' : '' }}>Tidak Lulus</option>
+    </select>
 
-            <button type="submit" class="btn btn-primary">🔍 Filter</button>
-            <a href="{{ route('pendaftaran.index') }}" class="btn btn-outline">Reset</a>
-        </form>
+    <select name="status_berkas" class="form-control">
+        <option value="">Semua Status Berkas</option>
+        <option value="pending" {{ request('status_berkas') == 'pending' ? 'selected' : '' }}>Pending</option>
+        <option value="perlu_perbaikan" {{ request('status_berkas') == 'perlu_perbaikan' ? 'selected' : '' }}>Perlu Perbaikan</option>
+        <option value="sudah_diperbaiki" {{ request('status_berkas') == 'sudah_diperbaiki' ? 'selected' : '' }}>Sudah Diperbaiki</option>
+        <option value="diterima" {{ request('status_berkas') == 'diterima' ? 'selected' : '' }}>Diterima</option>
+        <option value="ditolak" {{ request('status_berkas') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary">Filter</button>
+</form>
     </div>
 </div>
+
+@if(isset($tahunAjaranAktif) && $tahunAjaranAktif)
+    <div class="alert alert-info" style="margin-bottom:16px;">
+        Tahun ajaran aktif: <strong>{{ $tahunAjaranAktif->nama_tahun_ajaran }}</strong>
+    </div>
+@endif
 
 {{-- Table --}}
 <div class="card">
@@ -125,58 +135,71 @@
                     <th>Jalur</th>
                     <th>Berkas</th>
                     <th>Status</th>
+                    <th>Status Berkas</th>
+                    <th>Waktu Revisi</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
 
-            <tbody>
-                @forelse($pendaftaran ?? [] as $p)
-                <tr>
-                    <td style="font-weight:600;color:var(--primary);">
-                        {{ $p->nomor_pendaftaran }}
-                    </td>
+ <tbody>
+    @forelse($pendaftaran ?? [] as $p)
+    <tr>
+        <td style="font-weight:600;color:var(--primary);">
+            {{ $p->nomor_pendaftaran }}
+        </td>
 
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar me-2">
-                                {{ strtoupper(substr($p->nama, 0, 2)) }}
-                            </div>
-                            {{ $p->nama }}
-                        </div>
-                    </td>
+        <td>
+            <div class="d-flex align-items-center">
+                <div class="avatar me-2">
+                    {{ strtoupper(substr($p->nama, 0, 2)) }}
+                </div>
+                {{ $p->nama }}
+            </div>
+        </td>
 
-                    <td>{{ $p->nisn }}</td>
+        <td>{{ $p->nisn }}</td>
 
-                    <td>
-                        {{ $p->tempat_lahir }},
-                        {{ $p->tanggal_lahir ? $p->tanggal_lahir->format('d/m/Y') : '-' }}
-                    </td>
+        <td>
+            {{ $p->tempat_lahir }},
+            {{ $p->tanggal_lahir ? $p->tanggal_lahir->format('d/m/Y') : '-' }}
+        </td>
 
-                    <td>{{ $p->nama_orang_tua }}</td>
-                    <td>{{ $p->asal_sekolah }}</td>
-                    <td>{{ $p->alamat }}</td>
+        <td>{{ $p->nama_orang_tua }}</td>
+        <td>{{ $p->asal_sekolah }}</td>
+        <td>{{ $p->alamat }}</td>
 
-                    <td>
-                        <span class="badge {{ strtolower($p->jalur ?? '') == 'prestasi' ? 'badge-warning' : 'badge-secondary' }}">
-                            {{ ucfirst($p->jalur ?? '-') }}
-                        </span>
-                    </td>
+        <td>
+            <span class="badge {{ strtolower($p->jalur ?? '') == 'prestasi' ? 'badge-warning' : 'badge-secondary' }}">
+                {{ ucfirst($p->jalur ?? '-') }}
+            </span>
+        </td>
 
-                    <td>
-                        @php
-                            $berkasLengkap = !empty($p->nisn_file)
-                                && !empty($p->kartu_keluarga)
-                                && !empty($p->akta_kelahiran)
-                                && !empty($p->foto)
-                                && !empty($p->ijazah);
-                        @endphp
+        <td>
+            @php
+                $berkasLengkap = !empty($p->nisn_file)
+                    && !empty($p->kartu_keluarga)
+                    && !empty($p->akta_kelahiran)
+                    && !empty($p->foto)
+                    && !empty($p->ijazah);
+            @endphp
 
-                        @if($berkasLengkap)
-                            <span class="badge badge-success">Sudah upload</span>
-                        @else
-                            <span class="badge badge-warning">Belum upload</span>
-                        @endif
-                    </td>
+            @if($berkasLengkap)
+                <span class="badge badge-success">Sudah upload</span>
+            @else
+                <span class="badge badge-warning">Belum upload</span>
+            @endif
+        </td>
+
+        <td>
+            @if($p->status_berkas === 'perlu_perbaikan')
+                <span class="badge badge-warning">Perlu Perbaikan</span>
+            @elseif($p->status_berkas === 'sudah_diperbaiki')
+                <span class="badge badge-info">Sudah Diperbaiki</span>
+            @else
+                <span class="badge badge-secondary">Pending</span>
+            @endif
+        </td>
+
 
                     <td>
                         <form method="POST" action="{{ route('pendaftaran.updateStatus', $p->id) }}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -190,7 +213,7 @@
                                 data-target="catatan-{{ $p->id }}"
                             >
                                 <option value="waiting_proses" {{ $p->status == 'waiting_proses' ? 'selected' : '' }}>⏳ Waiting Proses</option>
-                                <option value="pending" {{ $p->status == 'pending' ? 'selected' : '' }}> ⚠️ Pending</option>
+                                <option value="pending" {{ $p->status == 'pending' ? 'selected' : '' }}>⚠️ Pending</option>
                                 <option value="verifikasi" {{ $p->status == 'verifikasi' ? 'selected' : '' }}>🔵 Verifikasi</option>
                                 <option value="lulus" {{ $p->status == 'lulus' ? 'selected' : '' }}>✅ Lulus</option>
                                 <option value="ditolak" {{ $p->status == 'ditolak' ? 'selected' : '' }}>❌ Tidak Lulus</option>
@@ -199,14 +222,15 @@
                             <div
                                 id="catatan-{{ $p->id }}"
                                 class="{{ $p->status === 'pending' ? '' : 'd-none' }}"
-                                style="width:100%; margin-top:6px;">
-                               <textarea
-                                    name="catatan"
+                                style="width:100%; margin-top:6px;"
+                            >
+                                <textarea
+                                    name="catatan_admin"
                                     class="form-control"
                                     rows="2"
                                     placeholder="Masukkan catatan untuk siswa..."
                                     style="font-size:11px;"
-                                >{{ old('catatan', $p->catatan) }}</textarea>
+                                >{{ old('catatan_admin', $p->catatan_admin) }}</textarea>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-sm" style="margin-top:6px;">Simpan</button>

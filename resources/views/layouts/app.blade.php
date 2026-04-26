@@ -53,14 +53,72 @@ nav svg { display:none !important; }
 <body>
 
 <!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
-    <div class="sidebar-logo">
+<aside class="sidebar" style="display:flex;flex-direction:column;height:100vh;">
+        <div class="sidebar-logo">
         <div class="sidebar-logo-icon">PP</div>
         <div>
             <div style="font-size:13px;font-weight:700;color:var(--primary);">PPDB Online</div>
             <div style="font-size:10px;color:var(--text-light);">T.A 2025/2026</div>
         </div>
     </div>
+
+@if(isset($globalTahunAjarans) && $globalTahunAjarans->count())
+    <div style="padding:16px 14px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;background:#fff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.5px;text-transform:uppercase;">
+                Tahun Ajaran
+            </div>
+
+            @if($selectedTahunAjaran && $selectedTahunAjaran->is_active)
+                <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;padding:3px 8px;border-radius:999px;">
+                    Aktif
+                </span>
+            @endif
+        </div>
+
+        <form action="{{ route('tahun-ajaran.pilih') }}" method="POST" style="margin:0;">
+            @csrf
+            <select name="tahun_ajaran_id"
+                    onchange="this.form.submit()"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe2ea;
+                        border-radius:12px;
+                        padding:12px 14px;
+                        font-size:14px;
+                        font-weight:600;
+                        color:#1e293b;
+                        background:#f8fafc;
+                        outline:none;
+                    ">
+                @foreach($globalTahunAjarans as $ta)
+                    <option value="{{ $ta->id }}"
+                        {{ ($selectedTahunAjaran?->id == $ta->id) ? 'selected' : '' }}>
+                        {{ $ta->nama_tahun_ajaran }}{{ $ta->is_active ? ' (Aktif)' : '' }}
+                    </option>
+                @endforeach
+            </select>
+        </form>
+
+        <a href="{{ route('tahun-ajaran.index') }}"
+           style="
+                display:flex;
+                align-items:center;
+                gap:8px;
+                margin-top:10px;
+                padding:10px 12px;
+                border-radius:10px;
+                background:#f8fafc;
+                color:#33528A;
+                text-decoration:none;
+                font-size:13px;
+                font-weight:600;
+           ">
+            <span>⚙️</span>
+            <span>Kelola tahun ajaran</span>
+        </a>
+    </div>
+@endif
 
     <nav class="sidebar-nav">
         <div class="nav-label">Menu Utama</div>

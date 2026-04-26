@@ -9,6 +9,7 @@ class Pendaftaran extends Model
     protected $table = 'pendaftarans';
 
 protected $fillable = [
+    'tahun_ajaran_id',
     'nomor_pendaftaran',
     'nama',
     'nisn',
@@ -70,6 +71,7 @@ protected $fillable = [
     'nisn_file', 'kartu_keluarga', 'akta_kelahiran', 'foto', 'ijazah',
     'catatan',
     'kelas_id',
+    'revisi_at',
 ];
 
     protected $casts = [
@@ -77,13 +79,25 @@ protected $fillable = [
         'berkas_lengkap' => 'boolean',
     ];
 
-    public function nilaiTes()
-    {
-        return $this->hasOne(NilaiTes::class, 'id_siswa');
-    }
 
+public function nilaiTes()
+{
+    return $this->hasOne(\App\Models\NilaiTes::class, 'id_siswa', 'id');
+}
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'id_kelas');
     }
+
+    public function tahunAjaran()
+{
+    return $this->belongsTo(TahunAjaran::class);
+}
+
+public function scopeByTahunAjaran($query, $tahunAjaranId)
+{
+    return $query->where('tahun_ajaran_id', $tahunAjaranId);
+}
+
+
 }

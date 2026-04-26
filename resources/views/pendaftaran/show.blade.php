@@ -272,6 +272,23 @@
             </div>
         </div>
 
+        
+        <div style="margin-top:20px;padding:20px;background:#fff;border-radius:12px;">
+            <h4>Catatan Perbaikan Berkas</h4>
+
+            <form action="{{ route('admin.pendaftaran.mintaPerbaikan', $data->id) }}" method="POST">
+                @csrf
+                <div style="margin-bottom:12px;">
+                    <label for="catatan_admin">Catatan Admin</label>
+                    <textarea name="catatan_admin" id="catatan_admin" rows="4" class="form-control" required>{{ old('catatan_admin', $data->catatan_admin) }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-warning">
+                    Minta Perbaikan
+                </button>
+            </form>
+        </div>
+
         {{-- Status --}}
         <div class="card">
             <div class="card-header">

@@ -41,6 +41,7 @@ class NilaiTesTemplateExport implements FromCollection, WithHeadings, WithMappin
             'Surah Pendek',
             'Doa',
             'Menulis',
+            'Status',
         ];
     }
 

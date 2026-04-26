@@ -5,19 +5,27 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Models\TahunAjaran;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ===== ADMIN USER =====
-        DB::table('users')->insert([
-            'name'       => 'Admin PPDB',
-            'email'      => 'admin@ppdb.sch.id',
-            'password'   => Hash::make('password'),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+         User::updateOrCreate(
+            ['email' => 'admin@ppdb.sch.id'],
+            [
+                'name' => 'Admin PPDB',
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        TahunAjaran::updateOrCreate(
+            ['nama_tahun_ajaran' => '2025/2026'],
+            [
+                'is_active' => true,
+            ]
+        );
 
         // ===== KELAS =====
         $kelas = [

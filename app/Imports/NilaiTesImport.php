@@ -4,129 +4,164 @@ namespace App\Imports;
 
 use App\Models\NilaiTes;
 use App\Models\Pendaftaran;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use Illuminate\Support\Facades\Log;
+use App\Helpers\TahunAjaranHelper;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 
-class NilaiTesImport
+class NilaiTesImport implements ToModel, WithStartRow
 {
-    public function import($file)
+    public function startRow(): int
     {
-        ini_set('sys_temp_dir', 'D:\\temp');
-
-        $spreadsheet = IOFactory::load($file);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray();
-
-        $berhasil = 0;
-        $gagal = 0;
-
-foreach ($rows as $index => $row) {
-    if ($index < 1) continue;
-
-    if ($index <= 5) {
-        Log::info('Preview row import nilai tes', [
-            'index' => $index,
-            'row' => $row,
-        ]);
+        return 3;
     }
 
-   $nisn = preg_replace('/\D/', '', trim((string) ($row[1] ?? '')));
-$namaSiswa = trim((string) ($row[2] ?? ''));
+    private function normalizeNumber($value)
+    {
+        $value = preg_replace('/\D/', '', (string) $value);
+        return ltrim($value, '0') ?: '0';
+    }
 
-$nisnNormal = ltrim($nisn, '0');
-
-$siswa = null;
-
-if ($nisn !== '') {
-    $siswa = Pendaftaran::where(function ($q) use ($nisn, $nisnNormal) {
-        $q->whereRaw('REPLACE(TRIM(nisn), " ", "") = ?', [$nisn]);
-
-        if ($nisnNormal !== '') {
-            $q->orWhereRaw(
-                'TRIM(LEADING "0" FROM REPLACE(TRIM(nisn), " ", "")) = ?',
-                [$nisnNormal]
-            );
+    private function parseNilai($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
         }
-    })->first();
-}
 
-if (!$siswa && $namaSiswa !== '') {
-    $siswa = Pendaftaran::whereRaw('LOWER(TRIM(nama)) = ?', [strtolower($namaSiswa)])->first();
-}
+        $value = trim((string) $value);
 
-if (!$siswa) {
-    $gagal++;
-    Log::warning('Siswa tidak ditemukan saat import nilai tes', [
-        'baris' => $index + 1,
-        'nisn_excel' => $nisn,
-        'nisn_normal' => $nisnNormal,
-        'nama' => $namaSiswa,
-        'row' => $row,
+        if (in_array($value, ['?', '-', ''], true)) {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return match (strtoupper($value)) {
+            'A' => 100,
+            'B' => 90,
+            'C' => 80,
+            'D' => 70,
+            default => null,
+        };
+    }
+
+    public function model(array $row)
+    {
+        $tahunAjaranId = TahunAjaranHelper::getSelectedId();
+
+        if (!$tahunAjaranId) {
+            return null;
+        }
+
+        // Excel kamu:
+        // A=0 NO
+        // B=1 NISN
+        // C=2 NAMA
+        // D=3 B.INDO
+        // E=4 MTK
+        // F=5 IPA
+        // G=6 IPS
+        // H=7 AGAMA
+        // I=8 DOA IFTITAH
+        // J=9 TAHIYAT
+        // K=10 QUNUT
+        // L=11 MEMBACA
+        // M=12 FATIHAH 4
+        // N=13 SURAH
+        // O=14 DOA
+        // P=15 MENULIS
+
+        $nisnRaw = trim((string) ($row[1] ?? ''));
+        $nama    = trim((string) ($row[2] ?? ''));
+
+        if ($nisnRaw === '' && $nama === '') {
+            return null;
+        }
+
+        $nisn = $this->normalizeNumber($nisnRaw);
+
+        $siswa = null;
+
+        if (!empty($nisnRaw)) {
+            $siswa = Pendaftaran::where('tahun_ajaran_id', $tahunAjaranId)
+                ->get()
+                ->first(function ($item) use ($nisn) {
+                    return $this->normalizeNumber($item->nisn) === $nisn;
+                });
+        }
+
+        if (!$siswa && !empty($nama)) {
+            $siswa = Pendaftaran::where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('nama', 'like', $nama)
+                ->first();
+        }
+
+        if (!$siswa) {
+            return null;
+        }
+
+        $bhsIndonesia = $this->parseNilai($row[3] ?? null);
+        $matematika   = $this->parseNilai($row[4] ?? null);
+        $ipa          = $this->parseNilai($row[5] ?? null);
+        $ips          = $this->parseNilai($row[6] ?? null);
+        $agama        = $this->parseNilai($row[7] ?? null);
+        $doaIftitah   = $this->parseNilai($row[8] ?? null);
+        $tahiyatAwal  = $this->parseNilai($row[9] ?? null);
+        $qunut        = $this->parseNilai($row[10] ?? null);
+        $membacaQuran = $this->parseNilai($row[11] ?? null);
+        $fatihah4     = $this->parseNilai($row[12] ?? null);
+        $surahPendek  = $this->parseNilai($row[13] ?? null);
+        $doa          = $this->parseNilai($row[14] ?? null);
+        $menulis      = $this->parseNilai($row[15] ?? null);
+
+        $total = ($bhsIndonesia ?? 0)
+            + ($matematika ?? 0)
+            + ($ipa ?? 0)
+            + ($ips ?? 0)
+            + ($agama ?? 0)
+            + ($doaIftitah ?? 0)
+            + ($tahiyatAwal ?? 0)
+            + ($qunut ?? 0)
+            + ($membacaQuran ?? 0)
+            + ($fatihah4 ?? 0)
+            + ($surahPendek ?? 0)
+            + ($doa ?? 0)
+            + ($menulis ?? 0);
+
+        $statusHasil = $total >= 600 ? 'lulus' : 'ditolak';
+
+        return NilaiTes::updateOrCreate(
+            [
+                'id_siswa' => $siswa->id,
+            ],
+            [
+                'id_siswa'         => $siswa->id,
+                'bhs_indonesia'    => $bhsIndonesia,
+                'matematika'       => $matematika,
+                'ipa'              => $ipa,
+                'ips'              => $ips,
+                'agama'            => $agama,
+                'doa_iftitah'      => $doaIftitah,
+                'tahiyat_awal'     => $tahiyatAwal,
+                'qunut'            => $qunut,
+                'membaca_al_quran' => $membacaQuran,
+                'fatihah_4'        => $fatihah4,
+                'surah_pendek'     => $surahPendek,
+                'doa'              => $doa,
+                'menulis'          => $menulis,
+                'tanggal_input'    => now()->toDateString(),
+                'status_hasil'     => $statusHasil,
+            ]
+        );
+        if ($statusHasil === 'lulus') {
+    $siswa->update([
+        'status' => 'lulus'
     ]);
-    continue;
-}
-    $nilai = [
-        'bhs_indonesia'    => is_numeric($row[3] ?? null) ? $row[3] : 0,
-        'matematika'       => is_numeric($row[4] ?? null) ? $row[4] : 0,
-        'ipa'              => is_numeric($row[5] ?? null) ? $row[5] : 0,
-        'ips'              => is_numeric($row[6] ?? null) ? $row[6] : 0,
-        'agama'            => is_numeric($row[7] ?? null) ? $row[7] : 0,
-        'doa_iftitah'      => is_numeric($row[8] ?? null) ? $row[8] : 0,
-        'tahiyat_awal'     => is_numeric($row[9] ?? null) ? $row[9] : 0,
-        'qunut'            => is_numeric($row[10] ?? null) ? $row[10] : 0,
-        'membaca_al_quran' => is_numeric($row[11] ?? null) ? $row[11] : 0,
-        'fatihah_4'        => is_numeric($row[12] ?? null) ? $row[12] : 0,
-        'surah_pendek'     => is_numeric($row[13] ?? null) ? $row[13] : 0,
-        'doa'              => is_numeric($row[14] ?? null) ? $row[14] : 0,
-        'menulis'          => is_numeric($row[15] ?? null) ? $row[15] : 0,
-    ];
-
-    $totalNilai = array_sum($nilai);
-    $statusHasil = $totalNilai >= 300 ? 'lulus' : 'ditolak';
-    
-$totalNilai =
-    (int) ($nilai['bhs_indonesia'] ?? 0) +
-    (int) ($nilai['matematika'] ?? 0) +
-    (int) ($nilai['ipa'] ?? 0) +
-    (int) ($nilai['ips'] ?? 0) +
-    (int) ($nilai['agama'] ?? 0) +
-    (int) ($nilai['doa_iftitah'] ?? 0) +
-    (int) ($nilai['tahiyat_awal'] ?? 0) +
-    (int) ($nilai['qunut'] ?? 0) +
-    (int) ($nilai['membaca_al_quran'] ?? 0) +
-    (int) ($nilai['fatihah_4'] ?? 0) +
-    (int) ($nilai['surah_pendek'] ?? 0) +
-    (int) ($nilai['doa'] ?? 0) +
-    (int) ($nilai['menulis'] ?? 0);
-
-    NilaiTes::create([
-        'id_siswa'         => $siswa->id,
-        // 'nisn'             => $nisn,
-        'bhs_indonesia'    => $nilai['bhs_indonesia'],
-        'matematika'       => $nilai['matematika'],
-        'ipa'              => $nilai['ipa'],
-        'ips'              => $nilai['ips'],
-        'agama'            => $nilai['agama'],
-        'doa_iftitah'      => $nilai['doa_iftitah'],
-        'tahiyat_awal'     => $nilai['tahiyat_awal'],
-        'qunut'            => $nilai['qunut'],
-        'membaca_al_quran' => $nilai['membaca_al_quran'],
-        'fatihah_4'        => $nilai['fatihah_4'],
-        'surah_pendek'     => $nilai['surah_pendek'],
-        'doa'              => $nilai['doa'],
-        'menulis'          => $nilai['menulis'],
-        'total_nilai'      => $totalNilai,
-        'tanggal_input'    => now()->format('Y-m-d'),
-        'status_hasil'     => $statusHasil,
-        'keterangan_hasil' => $statusHasil === 'lulus' ? 'Memenuhi ambang batas' : 'Tidak memenuhi ambang batas',
+} else {
+    $siswa->update([
+        'status' => 'ditolak'
     ]);
-
-    $berhasil++;
 }
-
-        return [
-            'berhasil' => $berhasil,
-            'gagal' => $gagal,
-        ];
     }
 }

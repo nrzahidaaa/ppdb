@@ -44,6 +44,7 @@
             <th>Doa</th>
             <th>Menulis</th>
             <th>Total</th>
+            <th>Status Hasil</th>
         </tr>
     </thead>
     <tbody>
@@ -69,6 +70,19 @@
             <td>{{ $r->doa }}</td>
             <td>{{ $r->menulis }}</td>
             <td class="total">{{ $total }}</td>
+            <td>
+    @php
+    $status = $r->status_hasil;
+@endphp
+
+@if($status === 'lulus')
+    <span style="color:green;font-weight:bold;">Lulus</span>
+@elseif(in_array($status, ['ditolak', 'tidak_lulus']))
+    <span style="color:red;font-weight:bold;">Tidak Lulus</span>
+@else
+    -
+@endif
+</td>
         </tr>
         @endforeach
     </tbody>

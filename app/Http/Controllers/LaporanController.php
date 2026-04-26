@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pendaftaran;
 use App\Models\NilaiTes;
 use App\Models\Kelas;
+use App\Models\TahunAjaran;
 use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -13,41 +14,97 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use App\Helpers\TahunAjaranHelper;
 
 class LaporanController extends Controller
 {
-    public function index()
-    {
-        $totalPendaftar = Pendaftaran::count();
-        $totalLulus     = Pendaftaran::where('status', 'lulus')->count();
-        $totalDitolak   = Pendaftaran::where('status', 'ditolak')->count();
-        $totalPending   = Pendaftaran::where('status', 'pending')->count();
-        $totalUnggul    = Pendaftaran::where('predikat', 'Unggul')->count();
-        $totalBaik      = Pendaftaran::where('predikat', 'Baik')->count();
-        $totalCukup     = Pendaftaran::where('predikat', 'Cukup')->count();
+    public function index(Request $request)
+{
+    // ambil dari dropdown laporan (kalau ada), kalau tidak pakai global
+    $selectedTahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
 
-        return view('laporan.index', compact(
-            'totalPendaftar', 'totalLulus', 'totalDitolak',
-            'totalPending', 'totalUnggul', 'totalBaik', 'totalCukup'
-        ));
+    // ambil semua tahun ajaran untuk dropdown
+    $tahunAjaranList = TahunAjaran::orderBy('nama_tahun_ajaran', 'desc')->get();
+
+    // query utama
+    $query = Pendaftaran::query();
+
+    if ($selectedTahunAjaranId) {
+        $query->where('tahun_ajaran_id', $selectedTahunAjaranId);
     }
+
+    // statistik
+    $totalPendaftar = (clone $query)->count();
+
+    $totalLulus = (clone $query)
+        ->where('status', 'lulus')
+        ->count();
+
+    $totalDitolak = (clone $query)
+        ->whereIn('status', ['ditolak', 'tidak_lulus'])
+        ->count();
+
+    $totalPending = (clone $query)
+        ->whereIn('status', ['pending', 'waiting_proses', 'verifikasi'])
+        ->count();
+
+    // predikat
+    $totalUnggul = (clone $query)->where('predikat', 'Unggul')->count();
+    $totalBaik   = (clone $query)->where('predikat', 'Baik')->count();
+    $totalCukup  = (clone $query)->where('predikat', 'Cukup')->count();
+
+    return view('laporan.index', compact(
+        'tahunAjaranList',
+        'selectedTahunAjaranId',
+        'totalPendaftar',
+        'totalLulus',
+        'totalDitolak',
+        'totalPending',
+        'totalUnggul',
+        'totalBaik',
+        'totalCukup'
+    ));
+}
 
     // ===== PDF =====
 
-    public function pdfPendaftar()
-    {
-        $data = Pendaftaran::latest()->get();
-        $pdf  = Pdf::loadView('laporan.pdf.pendaftar', compact('data'))
-                   ->setPaper('a4', 'landscape');
-        return $pdf->download('laporan-pendaftar.pdf');
+    public function pdfPendaftar(Request $request)
+{
+    // ambil tahun ajaran dari dropdown laporan
+    $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+
+    // query
+    $query = Pendaftaran::query();
+
+    // filter tahun ajaran
+    if ($tahunAjaranId) {
+        $query->where('tahun_ajaran_id', $tahunAjaranId);
     }
 
-public function pdfKlasifikasi()
+    // ambil data
+    $data = $query->latest()->get();
+
+    // generate pdf
+    $pdf  = Pdf::loadView('laporan.pdf.pendaftar', compact('data'))
+               ->setPaper('a4', 'landscape');
+
+    return $pdf->download('laporan-pendaftar.pdf');
+}
+
+public function pdfKlasifikasi(Request $request)
 {
-    $data = Pendaftaran::whereNotNull('predikat')
+    $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+
+    $query = Pendaftaran::whereNotNull('predikat')
         ->with('nilaiTes')
         ->leftJoin('nilai_tes', 'nilai_tes.id_siswa', '=', 'pendaftarans.id')
-        ->select('pendaftarans.*')
+        ->select('pendaftarans.*');
+
+    if ($tahunAjaranId) {
+        $query->where('pendaftarans.tahun_ajaran_id', $tahunAjaranId);
+    }
+
+    $data = $query
         ->orderByRaw("
             CASE pendaftarans.predikat
                 WHEN 'Unggul' THEN 1
@@ -59,78 +116,104 @@ public function pdfKlasifikasi()
         ->orderByDesc('nilai_tes.total_nilai')
         ->get();
 
-    $pdf  = Pdf::loadView('laporan.pdf.klasifikasi', compact('data'))
-               ->setPaper('a4', 'landscape');
+    $pdf = Pdf::loadView('laporan.pdf.klasifikasi', compact('data'))
+              ->setPaper('a4', 'landscape');
 
     return $pdf->download('laporan-klasifikasi.pdf');
 }
 
-    public function pdfPembagian(Request $request)
-    {
-        // Ambil filter kelas dari request, misal ?kelas[]=7A&kelas[]=7B
-        $filterKelas = $request->input('kelas', []);
+public function pdfPembagian(Request $request)
+{
+    $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
 
-        $query = Kelas::with(['siswa' => function ($q) {
-            $q->where('status', 'lulus');
-        }]);
+    $filterKelas = $request->input('kelas', []);
 
-        // Jika ada filter kelas tertentu, batasi hanya kelas itu
-        if (!empty($filterKelas)) {
-            $query->whereIn('nama_kelas', $filterKelas);
-        }
-
-        $kelas       = $query->get();
-        $filterLabel = !empty($filterKelas) ? implode(', ', $filterKelas) : 'Semua Kelas';
-
-        $pdf = Pdf::loadView('laporan.pdf.pembagian', compact('kelas', 'filterLabel'))
-                  ->setPaper('a4', 'portrait');
-
-        $filename = !empty($filterKelas)
-            ? 'laporan-pembagian-kelas-' . implode('-', $filterKelas) . '.pdf'
-            : 'laporan-pembagian-kelas.pdf';
-
-        return $pdf->download($filename);
+    if (!is_array($filterKelas)) {
+        $filterKelas = [$filterKelas];
     }
 
-    public function pdfNilai(Request $request)
-    {
-        // Ambil filter kelas dari request, misal ?kelas[]=7A&kelas[]=7B
-        $filterKelas = $request->input('kelas', []);
+    $filterKelas = array_filter($filterKelas, function ($item) {
+        return !empty($item) && $item !== 'semua';
+    });
 
-        $query = NilaiTes::with(['siswa' => function ($q) {
-            // Jika ada filter, join ke kelas
-            if (!empty($GLOBALS['filterKelas'] ?? [])) {
-                $q->whereHas('kelas', function ($kq) {
-                    $kq->whereIn('nama_kelas', $GLOBALS['filterKelas']);
-                });
-            }
-        }, 'siswa.kelas']);
+    $query = Kelas::with(['siswa' => function ($q) use ($tahunAjaranId) {
+        $q->where('status', 'lulus');
 
-        // Filter berdasarkan kelas siswa
-        if (!empty($filterKelas)) {
-            $query->whereHas('siswa.kelas', function ($q) use ($filterKelas) {
-                $q->whereIn('nama_kelas', $filterKelas);
-            });
+        if ($tahunAjaranId) {
+            $q->where('tahun_ajaran_id', $tahunAjaranId);
         }
+    }]);
 
-        $data        = $query->latest()->get();
-        $filterLabel = !empty($filterKelas) ? implode(', ', $filterKelas) : 'Semua Kelas';
-
-        $pdf = Pdf::loadView('laporan.pdf.nilai', compact('data', 'filterLabel'))
-                  ->setPaper('a4', 'landscape');
-
-        $filename = !empty($filterKelas)
-            ? 'laporan-nilai-tes-' . implode('-', $filterKelas) . '.pdf'
-            : 'laporan-nilai-tes.pdf';
-
-        return $pdf->download($filename);
+    if (!empty($filterKelas)) {
+        $query->whereIn('nama_kelas', $filterKelas);
     }
+
+    $kelas = $query->get();
+    $filterLabel = !empty($filterKelas) ? implode(', ', $filterKelas) : 'Semua Kelas';
+
+    $pdf = Pdf::loadView('laporan.pdf.pembagian', compact('kelas', 'filterLabel'))
+              ->setPaper('a4', 'portrait');
+
+    $filename = !empty($filterKelas)
+        ? 'laporan-pembagian-kelas-' . implode('-', $filterKelas) . '.pdf'
+        : 'laporan-pembagian-kelas.pdf';
+
+    return $pdf->download($filename);
+}
+
+public function pdfNilai(Request $request)
+{
+    $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+    $statusHasil = $request->status_hasil;
+
+    $query = \App\Models\NilaiTes::with(['siswa', 'siswa.kelas']);
+
+    if ($tahunAjaranId) {
+        $query->whereHas('siswa', function ($q) use ($tahunAjaranId) {
+            $q->where('tahun_ajaran_id', $tahunAjaranId);
+        });
+    }
+
+    if ($statusHasil === 'lulus') {
+        $query->where('status_hasil', 'lulus');
+    } elseif ($statusHasil === 'tidak_lulus') {
+        $query->whereIn('status_hasil', ['ditolak', 'tidak_lulus']);
+    }
+
+    $query->orderByDesc('total_nilai');
+
+    $data = $query->get();
+
+    $filterLabel = match ($statusHasil) {
+        'lulus' => 'Lulus',
+        'tidak_lulus' => 'Tidak Lulus',
+        default => 'Semua',
+    };
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.pdf.nilai', compact('data', 'filterLabel'))
+        ->setPaper('a4', 'landscape');
+
+    $filename = 'laporan-nilai-tes-' . strtolower(str_replace(' ', '-', $filterLabel)) . '.pdf';
+
+    return $pdf->download($filename);
+}
 
     // ===== EXCEL =====
 
   public function excelPendaftar()
 {
-    $data        = Pendaftaran::latest()->get();
+
+$tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+
+    $query = Pendaftaran::query();
+
+    if ($tahunAjaranId) {
+        $query->where('tahun_ajaran_id', $tahunAjaranId);
+    }
+
+    $data = $query->latest()->get();
+
+
     $spreadsheet = new Spreadsheet();
     $sheet       = $spreadsheet->getActiveSheet();
     $sheet->setTitle('Data Pendaftar');
@@ -188,7 +271,21 @@ public function pdfKlasifikasi()
 
 public function excelKlasifikasi()
 {
-    $data = Pendaftaran::whereNotNull('predikat')
+
+    $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+
+    $query = Pendaftaran::whereNotNull('predikat')
+        ->with('nilaiTes')
+        ->leftJoin('nilai_tes', 'nilai_tes.id_siswa', '=', 'pendaftarans.id')
+        ->select('pendaftarans.*');
+
+    if ($tahunAjaranId) {
+        $query->where('pendaftarans.tahun_ajaran_id', $tahunAjaranId);
+    }
+
+    $data = $query
+
+
         ->with('nilaiTes')
         ->leftJoin('nilai_tes', 'nilai_tes.id_siswa', '=', 'pendaftarans.id')
         ->select('pendaftarans.*')
@@ -250,11 +347,24 @@ public function excelKlasifikasi()
 
 public function excelPembagian(Request $request)
 {
+      $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+
     $filterKelas = $request->input('kelas', []);
 
+    if (!is_array($filterKelas)) {
+        $filterKelas = [$filterKelas];
+    }
+
+    $filterKelas = array_filter($filterKelas, function ($item) {
+        return !empty($item) && $item !== 'semua';
+    });
+
     $query = Pendaftaran::where('status', 'lulus')
-                ->whereNotNull('id_kelas')
-                ->with('kelas');
+        ->with('kelas');
+
+    if ($tahunAjaranId) {
+        $query->where('tahun_ajaran_id', $tahunAjaranId);
+    }
 
     if (!empty($filterKelas)) {
         $query->whereHas('kelas', function ($q) use ($filterKelas) {
@@ -262,7 +372,7 @@ public function excelPembagian(Request $request)
         });
     }
 
-    $data        = $query->latest()->get();
+    $data = $query->latest()->get();
     $spreadsheet = new Spreadsheet();
     $sheet       = $spreadsheet->getActiveSheet();
 
@@ -314,36 +424,48 @@ public function excelPembagian(Request $request)
 
 public function excelNilai(Request $request)
 {
-    $filterKelas = $request->input('kelas', []);
+    $tahunAjaranId = $request->tahun_ajaran_id ?? TahunAjaranHelper::getSelectedId();
+    $statusHasil = $request->status_hasil;
 
-    $query = NilaiTes::with('siswa.kelas');
+    $query = \App\Models\NilaiTes::with(['siswa', 'siswa.kelas']);
 
-    if (!empty($filterKelas)) {
-        $query->whereHas('siswa.kelas', function ($q) use ($filterKelas) {
-            $q->whereIn('nama_kelas', $filterKelas);
+    if ($tahunAjaranId) {
+        $query->whereHas('siswa', function ($q) use ($tahunAjaranId) {
+            $q->where('tahun_ajaran_id', $tahunAjaranId);
         });
     }
 
-    $data        = $query->latest()->get();
-    $spreadsheet = new Spreadsheet();
-    $sheet       = $spreadsheet->getActiveSheet();
+    if ($statusHasil === 'lulus') {
+        $query->where('status_hasil', 'lulus');
+    } elseif ($statusHasil === 'tidak_lulus') {
+        $query->whereIn('status_hasil', ['ditolak', 'tidak_lulus']);
+    }
 
-    $sheetTitle = !empty($filterKelas) ? 'Nilai Kelas ' . implode(' & ', $filterKelas) : 'Rekap Nilai Tes';
-    $sheet->setTitle(substr($sheetTitle, 0, 31));
+    $query->orderByDesc('total_nilai');
 
-    $filterLabel = !empty($filterKelas) ? implode(', ', $filterKelas) : 'Semua Kelas';
+    $data = $query->get();
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Rekap Nilai Tes');
+
+    $filterLabel = match ($statusHasil) {
+        'lulus' => 'Lulus',
+        'tidak_lulus' => 'Tidak Lulus',
+        default => 'Semua',
+    };
 
     $this->applyExcelReportHeader(
         $sheet,
         'LAPORAN REKAP NILAI TES',
-        'Filter Kelas: ' . $filterLabel . ' | Dicetak: ' . now()->format('d/m/Y H:i'),
-        'O'
+        'Filter: ' . $filterLabel . ' | Dicetak: ' . now()->format('d/m/Y H:i'),
+        'Q'
     );
 
     $headers = [
         'No', 'Nama Siswa', 'Kelas', 'IPA', 'IPS', 'Bhs. Indonesia', 'Matematika',
         'Doa Iftitah', 'Tahiyat Awal', 'Qunut', 'Baca Al-Quran',
-        'Fatihah 4', 'Doa', 'Menulis', 'Total'
+        'Fatihah 4', 'Doa', 'Menulis', 'Total', 'Status Hasil', 'Status Pendaftaran'
     ];
 
     foreach ($headers as $i => $h) {
@@ -351,42 +473,42 @@ public function excelNilai(Request $request)
     }
 
     foreach ($data as $i => $r) {
-        $total = $r->ipa + $r->ips + $r->bhs_indonesia + $r->matematika +
-                 $r->doa_iftitah + $r->tahiyat_awal + $r->qunut +
-                 $r->membaca_al_quran + $r->fatihah_4 + $r->doa + $r->menulis;
-
         $row = $i + 5;
-        $this->setCell($sheet, 1,  $row, $i + 1);
-        $this->setCell($sheet, 2,  $row, $r->siswa?->nama ?? '-');
-        $this->setCell($sheet, 3,  $row, $r->siswa?->kelas?->nama_kelas ?? '-');
-        $this->setCell($sheet, 4,  $row, $r->ipa);
-        $this->setCell($sheet, 5,  $row, $r->ips);
-        $this->setCell($sheet, 6,  $row, $r->bhs_indonesia);
-        $this->setCell($sheet, 7,  $row, $r->matematika);
-        $this->setCell($sheet, 8,  $row, $r->doa_iftitah);
-        $this->setCell($sheet, 9,  $row, $r->tahiyat_awal);
+
+        $this->setCell($sheet, 1, $row, $i + 1);
+        $this->setCell($sheet, 2, $row, $r->siswa?->nama ?? '-');
+        $this->setCell($sheet, 3, $row, $r->siswa?->kelas?->nama_kelas ?? '-');
+        $this->setCell($sheet, 4, $row, $r->ipa);
+        $this->setCell($sheet, 5, $row, $r->ips);
+        $this->setCell($sheet, 6, $row, $r->bhs_indonesia);
+        $this->setCell($sheet, 7, $row, $r->matematika);
+        $this->setCell($sheet, 8, $row, $r->doa_iftitah);
+        $this->setCell($sheet, 9, $row, $r->tahiyat_awal);
         $this->setCell($sheet, 10, $row, $r->qunut);
         $this->setCell($sheet, 11, $row, $r->membaca_al_quran);
         $this->setCell($sheet, 12, $row, $r->fatihah_4);
         $this->setCell($sheet, 13, $row, $r->doa);
         $this->setCell($sheet, 14, $row, $r->menulis);
-        $this->setCell($sheet, 15, $row, $total);
+        $this->setCell($sheet, 15, $row, $r->total_nilai);
+        $this->setCell($sheet, 16, $row, $r->status_hasil ? ucfirst(str_replace('_', ' ', $r->status_hasil)) : '-');
+        $this->setCell($sheet, 17, $row, $r->siswa?->status ? ucfirst(str_replace('_', ' ', $r->siswa->status)) : '-');
     }
 
     $lastRow = $data->count() + 4;
 
-    $this->applyExcelTableHeader($sheet, "A4:O4");
-    $this->applyExcelTableBorders($sheet, "A4:O{$lastRow}");
-    $this->autoSizeColumns($sheet, 'A', 'O');
-    $this->setupExcelPrint($sheet, 'O', $lastRow);
+    $this->applyExcelTableHeader($sheet, "A4:Q4");
+    $this->applyExcelTableBorders($sheet, "A4:Q{$lastRow}");
+    $this->autoSizeColumns($sheet, 'A', 'Q');
+    $this->setupExcelPrint($sheet, 'Q', $lastRow);
 
     $this->applyCenterAlignment($sheet, "A4:A{$lastRow}");
-    $this->applyCenterAlignment($sheet, "C4:O{$lastRow}");
-    $sheet->getStyle("B5:B{$lastRow}")->getFont()->setBold(true);
+    $this->applyCenterAlignment($sheet, "C4:Q{$lastRow}");
 
-    $filename = !empty($filterKelas)
-        ? 'laporan-nilai-tes-' . implode('-', $filterKelas) . '.xlsx'
-        : 'laporan-nilai-tes.xlsx';
+    if ($lastRow >= 5) {
+        $sheet->getStyle("B5:B{$lastRow}")->getFont()->setBold(true);
+    }
+
+    $filename = 'laporan-nilai-tes-' . strtolower(str_replace(' ', '-', $filterLabel)) . '.xlsx';
 
     return $this->downloadExcel($spreadsheet, $filename);
 }

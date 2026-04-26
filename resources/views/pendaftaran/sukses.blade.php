@@ -28,6 +28,13 @@
         <a href="{{ route('pendaftaran.formEdit') }}" class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;">
     ✏️ Edit Data Saya
         </a>
+        @if($data->status_berkas === 'perlu_perbaikan')
+    <div style="margin-top:20px;">
+        <a href="{{ route('pendaftaran.edit', $data->id) }}" class="btn btn-warning">
+            Edit Data / Berkas
+        </a>
+    </div>
+@endif
     </div>
 </body>
 </html>

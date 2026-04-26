@@ -235,19 +235,27 @@
                         </div>
                     @endif
 
-                    <div class="info-row" style="border-bottom:none;">
+                    {{-- Status Pendaftaran --}}
+                    <div class="info-row">
                         <span class="info-label">Status</span>
                         <span class="info-value">
-                            @if($data->status === 'lulus')
-                                ✅ Lulus
-                            @elseif($data->status === 'ditolak')
-                                ❌ Tidak Lulus
-                            @elseif($data->status === 'verifikasi')
-                                🔵 Verifikasi
+                            @if($data->status === 'waiting_proses')
+                                <span class="badge bg-warning">⏳ Sedang Dicek Panitia</span>
+
                             @elseif($data->status === 'pending')
-                                ⚠️ Pending
+                                <span class="badge bg-danger">⚠️ Perlu Perbaikan</span>
+
+                            @elseif($data->status === 'verifikasi')
+                                <span class="badge bg-info">✔️ Terverifikasi</span>
+
+                            @elseif($data->status === 'lulus')
+                                <span class="badge bg-success">🎉 Lulus</span>
+
+                            @elseif($data->status === 'ditolak')
+                                <span class="badge bg-danger">❌ Ditolak</span>
+
                             @else
-                                ⏳ Waiting Proses
+                                <span class="badge bg-secondary">{{ $data->status }}</span>
                             @endif
                         </span>
                     </div>

@@ -16,7 +16,7 @@ class Kelas extends Model
         'jurusan',
         'wali_kelas',
         'kuota',
-        'tahun_ajaran',
+        'tahun_ajaran_id',
     ];
 
     // ===== RELATIONSHIPS =====
@@ -42,4 +42,8 @@ class Kelas extends Model
             ? round(($this->terisi / $this->kuota) * 100)
             : 0;
     }
+    public function tahunAjaran()
+{
+    return $this->belongsTo(\App\Models\TahunAjaran::class);
+}
 }

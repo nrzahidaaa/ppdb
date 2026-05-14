@@ -219,6 +219,8 @@ $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
 
         'status' => 'waiting_proses',
         'berkas_lengkap' => false,
+        'tahun_ajaran_id' => TahunAjaranHelper::getSelectedId(),
+        
     ];
 
     Pendaftaran::create($data);
@@ -240,7 +242,7 @@ $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
         return view('pendaftaran.edit', compact('pendaftaran'));
     }
 
- public function update(Request $request, $id)
+ public function update(Request $request, int $id)
 {
     $pendaftaran = Pendaftaran::findOrFail($id);
 
@@ -816,77 +818,10 @@ $pendaftaran->save();
 
 public function template()
 {
-    $headers = [
-        'nama',
-        'nisn',
-        'nik',
-        'tempat_lahir',
-        'tanggal_lahir',
-        'jenis_kelamin',
-        'hobi',
-        'cita_cita',
-        'anak_ke',
-        'jumlah_saudara',
-        'status_tinggal',
-        'no_telp',
-        'alamat',
-        'desa_kelurahan',
-        'kecamatan',
-        'kabupaten_kota',
-        'kode_pos',
-        'asal_sekolah',
-        'jenis_sekolah',
-        'status_sekolah',
-        'npsn_sekolah',
-        'no_kk',
-        'nama_kepala_keluarga',
-        'status_kepemilikan_rumah',
-        'nama_ayah',
-        'nik_ayah',
-        'status_ayah',
-        'pendidikan_ayah',
-        'pekerjaan_ayah',
-        'penghasilan_ayah',
-        'no_hp_ayah',
-        'nama_ibu',
-        'nik_ibu',
-        'status_ibu',
-        'pendidikan_ibu',
-        'pekerjaan_ibu',
-        'penghasilan_ibu',
-        'no_hp_ibu',
-        'nama_wali',
-        'nik_wali',
-        'status_wali',
-        'pendidikan_wali',
-        'pekerjaan_wali',
-        'penghasilan_wali',
-        'no_hp_wali',
-        'jalur',
-        'nama_orang_tua',
-        'no_kks',
-        'no_pkh',
-        'no_kip',
-    ];
-
-    $filename = 'template_pendaftaran.csv';
-    $path = storage_path('app/' . $filename);
-
-    $handle = fopen($path, 'w');
-
-    // Tambahan biar Excel lebih aman baca UTF-8
-    fwrite($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-    // Pakai delimiter titik koma
-    fputcsv($handle, $headers, ';');
-
-    fclose($handle);
-
-    return response()->download($path, $filename, [
-        'Content-Type' => 'text/csv; charset=UTF-8',
-    ])->deleteFileAfterSend(true);
-
-    return Excel::download(new TemplatePendaftaranExport, 'template_pendaftaran.xlsx');
+    return Excel::download(
+        new TemplatePendaftaranExport,
+        'template_pendaftaran.xlsx'
+    );
 }
 
 public function mintaPerbaikan(Request $request, $id)

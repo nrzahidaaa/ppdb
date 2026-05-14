@@ -6,6 +6,8 @@
     <title>PPDB Online</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/ppdb.css') }}">
+    <link rel="icon" href="/logo_kemenag.png?v=999">
+<link rel="shortcut icon" href="/logo_kemenag.png?v=999">
 <style>
     html, body {
         height: 100%;
@@ -157,33 +159,71 @@
         </div>
     </div>
 
-    <div class="hero-visual">
-        <div style="font-size:11px;opacity:0.7;margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
-            Statistik PPDB 2025/2026
-        </div>
-        <div class="stats-grid-hero">
-            <div class="stat-hero">
-                <div style="font-size:28px;font-weight:800;">1.284</div>
-                <div style="font-size:11px;opacity:0.8;margin-top:3px;">Total Pendaftar</div>
-                <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">+12% vs tahun lalu</div>
-            </div>
-            <div class="stat-hero">
-                <div style="font-size:28px;font-weight:800;">360</div>
-                <div style="font-size:11px;opacity:0.8;margin-top:3px;">Kuota Tersedia</div>
-                <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">9 Rombongan Belajar</div>
-            </div>
-            <div class="stat-hero">
-                <div style="font-size:28px;font-weight:800;">847</div>
-                <div style="font-size:11px;opacity:0.8;margin-top:3px;">Terverifikasi</div>
-                <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">66% selesai</div>
-            </div>
-            <div class="stat-hero">
-                <div style="font-size:28px;font-weight:800;">437</div>
-                <div style="font-size:11px;opacity:0.8;margin-top:3px;">Belum Lengkap</div>
-                <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">Perlu tindak lanjut</div>
-            </div>
-        </div>
+ <div class="hero-visual">
+    <div style="font-size:11px;opacity:0.7;margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+        Statistik PPDB {{ $tahunAjaranAktif->nama ?? '2025/2026' }}
     </div>
+
+    <div class="stats-grid-hero">
+
+        <div class="stat-hero">
+            <div style="font-size:28px;font-weight:800;">
+                {{ number_format($totalPendaftar, 0, ',', '.') }}
+            </div>
+
+            <div style="font-size:11px;opacity:0.8;margin-top:3px;">
+                Total Pendaftar
+            </div>
+
+            <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">
+                Data realtime
+            </div>
+        </div>
+
+        <div class="stat-hero">
+            <div style="font-size:28px;font-weight:800;">
+                {{ number_format($kuotaTersedia, 0, ',', '.') }}
+            </div>
+
+            <div style="font-size:11px;opacity:0.8;margin-top:3px;">
+                Kuota Tersedia
+            </div>
+
+            <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">
+                {{ $jumlahKelas }} Rombongan Belajar
+            </div>
+        </div>
+
+        <div class="stat-hero">
+            <div style="font-size:28px;font-weight:800;">
+                {{ number_format($terverifikasi, 0, ',', '.') }}
+            </div>
+
+            <div style="font-size:11px;opacity:0.8;margin-top:3px;">
+                Terverifikasi
+            </div>
+
+            <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">
+                {{ $totalPendaftar > 0 ? round(($terverifikasi / $totalPendaftar) * 100) : 0 }}% selesai
+            </div>
+        </div>
+
+        <div class="stat-hero">
+            <div style="font-size:28px;font-weight:800;">
+                {{ number_format($belumLengkap, 0, ',', '.') }}
+            </div>
+
+            <div style="font-size:11px;opacity:0.8;margin-top:3px;">
+                Belum Lengkap
+            </div>
+
+            <div style="display:inline-block;background:var(--highlight);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;">
+                Perlu tindak lanjut
+            </div>
+        </div>
+
+    </div>
+</div>
 </div>
 
 {{-- ===== INFORMASI PPDB ===== --}}

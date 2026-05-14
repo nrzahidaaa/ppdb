@@ -17,4 +17,8 @@ class NilaiTes extends Model
     {
         return $this->belongsTo(Pendaftaran::class, 'id_siswa');
     }
+public function pendaftaran()
+{
+    return $this->belongsTo(Pendaftaran::class, 'id_siswa');
+}
 }

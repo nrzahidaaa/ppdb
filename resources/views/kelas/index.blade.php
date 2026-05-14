@@ -68,7 +68,7 @@
                                 data-nama="{{ $k->nama_kelas }}"
                                 data-wali="{{ $k->wali_kelas }}"
                                 data-kuota="{{ $k->kuota }}">✏️</button>
-                            <form method="POST" action="{{ route('master.kelas.destroy', $k->id) }}" onsubmit="return confirm('Yakin hapus kelas ini?')">
+                            <form method="POST" action="{{ route('kelas.destroy', $k->id) }}" onsubmit="return confirm('Yakin hapus kelas ini?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm">🗑</button>
                             </form>
@@ -90,7 +90,7 @@
             <h3 style="font-size:15px;font-weight:700;">➕ Tambah Kelas</h3>
             <button onclick="closeModal('modal-tambah-kelas')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-light);">✕</button>
         </div>
-        <form method="POST" action="{{ route('master.kelas.store') }}">
+        <form method="POST" action="{{ route('kelas.store') }}">
             @csrf
             <div class="form-group">
                 <label class="form-label">Nama Kelas <span style="color:red;">*</span></label>

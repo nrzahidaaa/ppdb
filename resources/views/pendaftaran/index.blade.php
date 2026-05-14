@@ -150,7 +150,7 @@
                     <th>Berkas</th>
                     <th>Status</th>
                     <th>Status Berkas</th>
-                    <th>Waktu Revisi</th>
+
                     <th>Aksi</th>
                 </tr>
             </thead>

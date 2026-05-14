@@ -46,7 +46,7 @@
                     <th>NISN</th>
                     <th>Asal Sekolah</th>
                     <!-- <th>Jurusan</th> -->
-                    <th>Nilai Rata-rata</th>
+                    <!-- <th>Nilai Rata-rata</th> -->
                     <th>Kelas</th>
                 </tr>
             </thead>
@@ -71,7 +71,7 @@
                         @else <span class="badge badge-secondary">Bahasa</span>
                         @endif
                     </td> -->
-                    <td style="font-weight:600;">{{ $s->nilai_rata_rata }}</td>
+                    <!-- <td style="font-weight:600;">{{ $s->nilai_rata_rata }}</td> -->
                     <td>
                         @if($s->kelas)
                             <span class="badge badge-primary">{{ $s->kelas->nama_kelas }}</span>

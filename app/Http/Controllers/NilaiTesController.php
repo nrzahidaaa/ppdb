@@ -6,6 +6,7 @@ use App\Helpers\TahunAjaranHelper;
 use App\Models\Pendaftaran;
 use Illuminate\Http\Request;
 use App\Imports\NilaiTesImport;
+use App\Exports\NilaiTesTemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class NilaiTesController extends Controller
@@ -67,4 +68,11 @@ class NilaiTesController extends Controller
 
         return redirect()->route('nilai-tes.index')->with('success', 'Data nilai tes berhasil diimport.');
     }
+    public function downloadTemplate()
+{
+    return Excel::download(
+        new NilaiTesTemplateExport,
+        'template_nilai_tes.xlsx'
+    );
+}
 }

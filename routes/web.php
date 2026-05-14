@@ -55,17 +55,15 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('pendaftaran', PendaftaranController::class);
 
     Route::resource('master', MasterController::class);
+    Route::get('/master', [MasterController::class, 'index'])->name('master.index');
+Route::post('/master/user', [MasterController::class, 'storeUser'])->name('master.user.store');
+Route::put('/master/user/{id}', [MasterController::class, 'updateUser'])->name('master.user.update');
+Route::delete('/master/user/{id}', [MasterController::class, 'destroyUser'])->name('master.user.destroy');
 
-    Route::post('/master/user', [MasterController::class, 'storeUser'])->name('master.user.store');
-    Route::put('/master/user/{id}', [MasterController::class, 'updateUser'])->name('master.user.update');
-    Route::delete('/master/user/{id}', [MasterController::class, 'destroyUser'])->name('master.user.destroy');
-
-    Route::get('/kelas', [MasterController::class, 'indexKelas'])->name('kelas.index');
-    Route::post('/master/kelas', [MasterController::class, 'storeKelas'])->name('master.kelas.store');
-    Route::put('/master/kelas/{id}', [MasterController::class, 'updateKelas'])->name('master.kelas.update');
-    Route::delete('/master/kelas/{id}', [MasterController::class, 'destroyKelas'])->name('master.kelas.destroy');
 
     Route::resource('siswa', SiswaController::class);
+    
+    Route::resource('kelas', KelasController::class);
 
     Route::get('/klasifikasi', [KlasifikasiController::class, 'index'])->name('klasifikasi.index');
     Route::post('/klasifikasi/proses', [KlasifikasiController::class, 'proses'])->name('klasifikasi.proses');

@@ -10,47 +10,75 @@ use App\Helpers\TahunAjaranHelper;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        // Statistik utama
-        $totalPendaftar  = Pendaftaran::count();
-        $totalLulus      = Pendaftaran::where('status', 'lulus')->count();
-        $totalDitolak    = Pendaftaran::where('status', 'ditolak')->count();
-        $totalPending    = Pendaftaran::where('status', 'pending')->count();
-        $totalVerifikasi = Pendaftaran::where('status', 'verifikasi')->count();
-        $totalKelas      = Kelas::count();
-        $totalKuota = Kelas::sum('kuota');
-        $totalNilaiTes   = NilaiTes::count();
+public function index()
+{
+   $tahunAjaranId = TahunAjaranHelper::getSelectedId();
 
-        // Predikat
-        $totalUnggul = Pendaftaran::where('predikat', 'Unggul')->count();
-        $totalBaik   = Pendaftaran::where('predikat', 'Baik')->count();
-        $totalCukup  = Pendaftaran::where('predikat', 'Cukup')->count();
+$queryPendaftaran = Pendaftaran::when($tahunAjaranId, function ($q) use ($tahunAjaranId) {
+    $q->where('tahun_ajaran_id', $tahunAjaranId);
+});
 
-        // Sudah dapat kelas
-        $sudahKelas  = Pendaftaran::where('status', 'lulus')->whereNotNull('id_kelas')->count();
-        $belumKelas  = Pendaftaran::where('status', 'lulus')->whereNull('id_kelas')->count();
+$queryKelas = Kelas::when($tahunAjaranId, function ($q) use ($tahunAjaranId) {
+    $q->where('tahun_ajaran_id', $tahunAjaranId);
+});
 
-        // Pendaftar terbaru
-        $pendaftarTerbaru = Pendaftaran::latest()->take(5)->get();
+$queryNilaiTes = NilaiTes::whereHas('pendaftaran', function ($q) use ($tahunAjaranId) {
+    $q->where('tahun_ajaran_id', $tahunAjaranId);
+});
 
-        // Tren pendaftaran per minggu (5 minggu terakhir)
-        $tren = [];
-        for ($i = 4; $i >= 0; $i--) {
-            $start = now()->subWeeks($i)->startOfWeek();
-            $end   = now()->subWeeks($i)->endOfWeek();
-            $tren[] = [
-                'minggu' => 'M' . (5 - $i),
-                'total'  => Pendaftaran::whereBetween('created_at', [$start, $end])->count(),
-            ];
-        }
+    // Statistik utama
+    $totalPendaftar  = (clone $queryPendaftaran)->count();
+    $totalLulus      = (clone $queryPendaftaran)->where('status', 'lulus')->count();
+    $totalDitolak    = (clone $queryPendaftaran)->where('status', 'ditolak')->count();
+    $totalPending    = (clone $queryPendaftaran)->where('status', 'pending')->count();
+    $totalVerifikasi = (clone $queryPendaftaran)->where('status', 'verifikasi')->count();
 
-        return view('dashboard.index', compact(
-            'totalPendaftar', 'totalLulus', 'totalDitolak', 'totalPending',
-            'totalVerifikasi', 'totalKelas', 'totalKuota', 'totalNilaiTes',
-            'totalUnggul', 'totalBaik', 'totalCukup',
-            'sudahKelas', 'belumKelas',
-            'pendaftarTerbaru', 'tren'
-        ));
+    $totalKelas    = (clone $queryKelas)->count();
+    $totalKuota    = (clone $queryKelas)->sum('kuota');
+    $totalNilaiTes = (clone $queryNilaiTes)->count();
+
+    // Predikat
+    $totalUnggul = (clone $queryPendaftaran)->where('predikat', 'Unggul')->count();
+    $totalBaik   = (clone $queryPendaftaran)->where('predikat', 'Baik')->count();
+    $totalCukup  = (clone $queryPendaftaran)->where('predikat', 'Cukup')->count();
+
+    // Sudah/belum dapat kelas
+    $sudahKelas = (clone $queryPendaftaran)
+        ->where('status', 'lulus')
+        ->whereNotNull('id_kelas')
+        ->count();
+
+    $belumKelas = (clone $queryPendaftaran)
+        ->where('status', 'lulus')
+        ->whereNull('id_kelas')
+        ->count();
+
+    // Pendaftar terbaru
+    $pendaftarTerbaru = (clone $queryPendaftaran)
+        ->latest()
+        ->take(5)
+        ->get();
+
+    // Tren pendaftaran per minggu
+    $tren = [];
+    for ($i = 4; $i >= 0; $i--) {
+        $start = now()->subWeeks($i)->startOfWeek();
+        $end   = now()->subWeeks($i)->endOfWeek();
+
+        $tren[] = [
+            'minggu' => 'M' . (5 - $i),
+            'total'  => (clone $queryPendaftaran)
+                ->whereBetween('created_at', [$start, $end])
+                ->count(),
+        ];
     }
+
+    return view('dashboard.index', compact(
+        'totalPendaftar', 'totalLulus', 'totalDitolak', 'totalPending',
+        'totalVerifikasi', 'totalKelas', 'totalKuota', 'totalNilaiTes',
+        'totalUnggul', 'totalBaik', 'totalCukup',
+        'sudahKelas', 'belumKelas',
+        'pendaftarTerbaru', 'tren'
+    ));
+}
 }

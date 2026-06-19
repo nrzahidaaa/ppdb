@@ -28,8 +28,11 @@ class SiswaController extends Controller
             $query->where('pilihan_jurusan', $request->jurusan);
         }
 
-        $siswa = $query->latest()->paginate(15)->withQueryString();
-
+        $siswa = $query
+        ->orderByRaw('CAST(nomor_pendaftaran AS UNSIGNED) ASC')
+        ->paginate(15)
+        ->withQueryString();
+        
         return view('siswa.index', compact('siswa'));
     }
 }

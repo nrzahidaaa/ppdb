@@ -46,7 +46,7 @@
 }
 </style>
 
-{{-- Header --}}
+
 <div class="section-header">
     <div>
         <h2 style="font-size:16px;font-weight:700;">Daftar Pendaftar</h2>
@@ -54,17 +54,6 @@
     </div>
 </div>
 
-@if(session('success'))
-    <div class="alert alert-success" style="margin-bottom:16px;">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger" style="margin-bottom:16px;">
-        {{ session('error') }}
-    </div>
-@endif
 
 <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
     <form method="POST" action="{{ route('pendaftaran.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -73,24 +62,24 @@
         <button type="submit" class="btn btn-secondary">📥 Import Siswa</button>
     </form>
     
-<a href="{{ route('pendaftaran.template') }}" 
-   style="display:inline-flex; align-items:center; gap:8px;
-          padding:8px 16px; border-radius:8px;
-          border:2px solid var(--primary); 
-          color:var(--primary); background:transparent;
-          font-size:13px; font-weight:600; text-decoration:none;
-          transition:.2s; cursor:pointer;"
-   onmouseover="this.style.background='var(--primary)'; this.style.color='white';"
-   onmouseout="this.style.background='transparent'; this.style.color='var(--primary)';">
-    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" 
-         fill="none" stroke="currentColor" stroke-width="2.5" 
-         stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-    Download Template
-</a>
+    <a href="{{ route('pendaftaran.template') }}" 
+    style="display:inline-flex; align-items:center; gap:8px;
+            padding:8px 16px; border-radius:8px;
+            border:2px solid var(--primary); 
+            color:var(--primary); background:transparent;
+            font-size:13px; font-weight:600; text-decoration:none;
+            transition:.2s; cursor:pointer;"
+    onmouseover="this.style.background='var(--primary)'; this.style.color='white';"
+    onmouseout="this.style.background='transparent'; this.style.color='var(--primary)';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" 
+            fill="none" stroke="currentColor" stroke-width="2.5" 
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Template
+    </a>
     <a href="{{ route('pendaftaran.create') }}" class="btn btn-primary">➕ Tambah Pendaftar</a>
 </div>
 
@@ -100,7 +89,7 @@
     </div>
 @endif
 
-{{-- Filters --}}
+
 <div class="card" style="margin-bottom:20px;">
     <div class="card-body" style="padding:16px 20px;">
         <form method="GET" action="{{ route('pendaftaran.index') }}" class="d-flex gap-2 mb-3">
@@ -133,7 +122,7 @@
     </div>
 @endif
 
-{{-- Table --}}
+
 <div class="card">
     <div class="table-wrapper">
         <table class="data-table">
@@ -281,7 +270,6 @@
         </table>
     </div>
 
-    {{-- Pagination --}}
     <div class="pagination-wrapper">
         <span class="pagination-info">
             @if(isset($pendaftaran) && method_exists($pendaftaran, 'total'))

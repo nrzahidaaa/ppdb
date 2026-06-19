@@ -5,7 +5,6 @@
 
 @section('content')
 
-{{-- Header --}}
 <div class="section-header">
     <div>
         <h2 style="font-size:16px;font-weight:700;">Data Kelas</h2>
@@ -13,21 +12,12 @@
     </div>
 </div>
 
-{{-- Alert --}}
-@if(session('success'))
-<div class="alert alert-success" style="margin-bottom:16px;">✅ {{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger" style="margin-bottom:16px;">❌ {{ session('error') }}</div>
-@endif
 
-{{-- Toolbar --}}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <p style="font-size:12px;color:var(--text-light);">Kelola data kelas yang tersedia</p>
     <button onclick="openModal('modal-tambah-kelas')" class="btn btn-primary">➕ Tambah Kelas</button>
 </div>
 
-{{-- Tabel Kelas --}}
 <div class="card">
     <div class="table-wrapper">
         <table class="data-table">
@@ -83,7 +73,7 @@
     </div>
 </div>
 
-{{-- ==================== MODAL TAMBAH KELAS ==================== --}}
+
 <div id="modal-tambah-kelas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:440px;margin:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -112,7 +102,7 @@
     </div>
 </div>
 
-{{-- ==================== MODAL EDIT KELAS ==================== --}}
+
 <div id="modal-edit-kelas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:440px;margin:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">

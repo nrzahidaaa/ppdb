@@ -5,7 +5,7 @@
 
 @section('content')
 
-{{-- Alert Cards --}}
+
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
     <div style="background:linear-gradient(135deg,#e8f4fd,#d1eaf8);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
         <div style="font-size:28px;">📋</div>
@@ -30,7 +30,7 @@
     </div>
 </div>
 
-{{-- Stat Cards --}}
+
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
 
     <div class="card" style="padding:20px;">
@@ -86,10 +86,10 @@
 
 </div>
 
-{{-- Row 2: Pendaftar Terbaru + Predikat + Tren --}}
+
 <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:24px;">
 
-    {{-- Pendaftar Terbaru --}}
+
     <div class="card">
         <div class="card-header">
             <span class="card-title">📋 Pendaftar Terbaru</span>
@@ -133,11 +133,9 @@
         </div>
     </div>
 
-    {{-- Predikat + Status --}}
     <div style="display:flex;flex-direction:column;gap:16px;">
 
-        {{-- Predikat --}}
-        <div class="card" style="flex:1;">
+            <div class="card" style="flex:1;">
             <div class="card-header">
                 <span class="card-title">🏆 Hasil Klasifikasi</span>
                 <a href="{{ route('klasifikasi.index') }}" class="btn btn-outline btn-sm">Detail →</a>
@@ -184,7 +182,7 @@
             </div>
         </div>
 
-        {{-- Pembagian Kelas --}}
+
         <div class="card" style="flex:1;">
             <div class="card-header">
                 <span class="card-title">🏫 Pembagian Kelas</span>
@@ -207,7 +205,7 @@
     </div>
 </div>
 
-{{-- Tren Pendaftaran --}}
+
 <div class="card">
     <div class="card-header">
         <span class="card-title">📈 Tren Pendaftaran (5 Minggu Terakhir)</span>

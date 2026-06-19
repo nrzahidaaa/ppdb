@@ -5,7 +5,7 @@
 
 @section('content')
 
-{{-- Header --}}
+
 <div class="section-header">
     <div>
         <h2 style="font-size:16px;font-weight:700;">Data Master</h2>
@@ -13,21 +13,13 @@
     </div>
 </div>
 
-{{-- Alert --}}
-@if(session('success'))
-<div class="alert alert-success" style="margin-bottom:16px;">✅ {{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger" style="margin-bottom:16px;">❌ {{ session('error') }}</div>
-@endif
 
-{{-- Toolbar --}}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <p style="font-size:12px;color:var(--text-light);">Kelola akun admin yang dapat mengakses sistem</p>
     <button onclick="openModal('modal-tambah-user')" class="btn btn-primary">➕ Tambah User</button>
 </div>
 
-{{-- Tabel User --}}
+
 <div class="card">
     <div class="table-wrapper">
         <table class="data-table">
@@ -78,7 +70,7 @@
     </div>
 </div>
 
-{{-- ==================== MODAL TAMBAH USER ==================== --}}
+
 <div id="modal-tambah-user" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:440px;margin:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -111,7 +103,7 @@
     </div>
 </div>
 
-{{-- ==================== MODAL EDIT USER ==================== --}}
+
 <div id="modal-edit-user" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:440px;margin:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">

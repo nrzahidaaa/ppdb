@@ -42,7 +42,10 @@ public function index(Request $request)
         $query->where('status_berkas', $request->status_berkas);
     }
 
-    $pendaftaran = $query->latest()->paginate(10)->withQueryString();
+    $pendaftaran = $query
+    ->orderByRaw('CAST(nomor_pendaftaran AS UNSIGNED) ASC')
+    ->paginate(10)
+    ->withQueryString();
 
     $notifRevisi = Pendaftaran::query()
     ->when($tahunAjaranId, function ($q) use ($tahunAjaranId) {

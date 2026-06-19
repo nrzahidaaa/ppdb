@@ -12,15 +12,7 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success" style="margin-bottom:16px;">✅ {{ session('success') }}</div>
-@endif
 
-@if(session('error'))
-<div class="alert alert-danger" style="margin-bottom:16px;">❌ {{ session('error') }}</div>
-@endif
-
-{{-- Statistik --}}
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
     <div class="card" style="text-align:center;padding:20px;">
         <div style="font-size:32px;font-weight:800;color:var(--primary);">{{ $pending }}</div>
@@ -38,7 +30,6 @@
     </div>
 </div>
 
-{{-- Predikat --}}
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
     <div class="card" style="text-align:center;padding:20px;border-top:4px solid #C4E81D;">
         <div style="font-size:28px;margin-bottom:6px;">🏆</div>
@@ -62,7 +53,7 @@
     </div>
 </div>
 
-{{-- Form Klasifikasi --}}
+
 <div class="card" style="margin-bottom:24px;">
     <div class="card-header">
         <span class="card-title">⚙️ Pengaturan Klasifikasi</span>
@@ -104,7 +95,7 @@
     </div>
 </div>
 
-{{-- Hasil Klasifikasi --}}
+
 <div class="card">
     <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
         <span class="card-title">📊 Hasil Klasifikasi Siswa</span>
@@ -167,9 +158,9 @@
                         <td>{{ $i + 1 }}</td>
                         <td style="font-weight:600;">{{ $p->nama ?? '-' }}</td>
                         <td style="font-weight:700;color:#33528A;">{{ $totalNilai }}</td>
-                        <td><span style="{{ $classUnggul }}">{{ $pUnggul }}%</span></td>
-                        <td><span style="{{ $classBaik }}">{{ $pBaik }}%</span></td>
-                        <td><span style="{{ $classCukup }}">{{ $pCukup }}%</span></td>
+                        <td><span class="{{ $classUnggul }}">{{ $pUnggul }}%</span></td>
+                        <td><span class="{{ $classBaik }}">{{ $pBaik }}%</span></td>
+                        <td><span class="{{ $classCukup }}">{{ $pCukup }}%</span></td>
                         <td>
                             @if(($p->predikat ?? '') === 'Unggul')
                                 <span class="badge" style="background:#C4E81D;color:#597001;">🏆 Unggul</span>
